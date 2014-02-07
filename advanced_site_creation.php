@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: Advanced Site Creation Plugin
- * Plugin URI: https://github.com/Link7/wp-plugins/tree/develop/advanced-site-creation
+ * Plugin URI: https://github.com/Link7/advanced-site-creation
  * Description: A plugin to customise Wordpress MU site creation
  * Version: 1.1
  * Author: Link7
- * Author URI: http://github.com/Link7
+ * Author URI: https://github.com/Link7
  * License: GPL3
- * License URI: https://www.gnu.org/copyleft/gpl.html
+ * License URI: http://www.gnu.org/licenses/gpl.html
  * Credits: 
  *	Donncha O Caoimh http://ocaoimh.ie/ for WordPress MU Domain Mapping (http://ocaoimh.ie/wordpress-mu-domain-mapping/) 
  *	Igor Vaynberg http://ivaynberg.github.io/select2/ for select2 library

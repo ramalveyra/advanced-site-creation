@@ -68,3 +68,5 @@ Avaliable Settings:
     - You can limit the number of Plugins per page by supplying the limits on "Plugins per page" option. This will be ignored if "multi-value" is selected instead.
  - Selecting "Multi value" will show the list of plugins inside a multi value select box. 
 
+##Contributors
+[@ramalveyra](https://github.com/ramalveyra)
