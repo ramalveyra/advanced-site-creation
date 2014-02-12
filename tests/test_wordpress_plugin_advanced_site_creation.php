@@ -83,7 +83,7 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 	 * Skip this for now
 	 */
 	function test_dependent_plugins_activated(){
-		$this->markTestSkipped();
+		//$this->markTestSkipped();
 		/* Supply dependent plugin by adding slugs here */
 		$_plugins = array(
 			'wordpress-mu-domain-mapping/domain_mapping.php',
@@ -104,7 +104,7 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 	// Check if the menu has been added correctly
 	function test_plugin_menu_added(){
 		/** 
-		 * -- Arrange --
+		 * Arrange
 		 * set the variables
 		 */
 		global $advanced_site_creation_menu;
@@ -114,14 +114,14 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 
 		//set_current_screen( 'dashboard-network' );
 		/** 
-		 * -- Act --
+		 * Act
 		 */
 		// Create the plugin menu
 		$this->asc->add_advanced_site_creation_menu();
 		
 
 		/** 
-		 * -- Assert --
+		 * Assert
 		 * Check for existence
 		 */
 		
@@ -150,6 +150,74 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * Check plugin settings
+	 */
+	function test_has_no_settings(){
+		$this->assertFalse($this->asc->network_settings);
+	}
+
+	// Should return null if no post is set;
+	function test_post_empty(){
+
+		//Act
+		$this->asc->saveNetworkSettings();
+		
+		//Assert
+		$this->assertFalse($this->asc->network_settings);
+	}
+
+	// Null if $_POST value is not for plugin settings
+	function test_filter_posts(){
+		//Arrange
+		$_POST['random'] = 'dummy';
+
+		//Act
+		$this->asc->saveNetworkSettings();
+
+		//Assert
+		$this->assertFalse($this->asc->network_settings);
+	}
+
+	
+	// Nonce checking must exists 
+	function test_plugin_settings_nonce_check(){
+		//Arrange
+		$_POST['network_settings'] = array();
+		$nonce_checked = false;
+
+		//Act
+		try {
+           $this->asc->saveNetworkSettings();
+        } catch (WPDieException $e) {
+        	//Function failed, means its looking for nonce
+        	$nonce_checked = true;
+        }
+
+        //Assert
+        $this->assertTrue($nonce_checked,'Nonce not being checked.');
+	}
+
+	//Field sanitation must exists
+	function test_plugin_settings_field_sanitize(){
+		//Arrange
+		//Create nonce
+		$_POST['network_settings'] = array();
+		$nonce = wp_create_nonce('save-network-settings');
+		$_REQUEST['asc-settings-network-plugin'] = $nonce;
+
+		//Create unsanitized value;
+		$unsanitized_field = '<??>';
+
+		$_POST['network_settings']['unsanitized_field'] = $unsanitized_field;
+			
+		//Act
+		$this->asc->saveNetworkSettings();
+		$options = get_site_option('asc_network_settings');
+		
+		//Assert
+		$this->assertNotEquals($unsanitized_field, $options['unsanitized_field'], 'Fields not being sanitized.');
+	}
 
 	
 }
