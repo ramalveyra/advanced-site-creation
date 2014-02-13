@@ -219,5 +219,124 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		$this->assertNotEquals($unsanitized_field, $options['unsanitized_field'], 'Fields not being sanitized.');
 	}
 
+	//Check if settings are saved
+	function test_plugin_settings_set_fields(){
+		//Arrange
+		//Create nonce
+		$_POST['network_settings'] = array();
+		$nonce = wp_create_nonce('save-network-settings');
+		$_REQUEST['asc-settings-network-plugin'] = $nonce;
+		//test field values
+		$_POST['network_settings']['themedisplay']  ='default';
+		$_POST['network_settings']['plugindisplay'] ='default';
+		$_POST['network_settings']['themesperpage'] = 5;
+		$_POST['network_settings']['pluginsperpage'] = 5;
+
+		//Act
+		$this->asc->saveNetworkSettings();
+		$options = get_site_option('asc_network_settings');
+
+		//Assert
+		$this->assertTrue(is_array($options));
+		foreach ($options as $key => $value) {
+			$this->assertEquals($_POST['network_settings'][$key],$value);
+		}
+	}
+
+	//Test theme fetching
+	function test_get_themes_default(){
+		//Act
+		$this->asc->getThemes();
+
+		//Assert
+		//Must return a theme
+		$this->assertTrue(is_array($this->asc->themes));
+
+		//Must not be empty
+		$this->assertFalse(empty($this->asc->themes));
+
+		//Must be an instance of WP_Theme
+		foreach($this->asc->themes as $theme){
+			$this->assertEquals(get_class($theme),'WP_Theme');
+		}
+	}
+
+	function test_get_themes_limit_on_view_default(){
+		//Arrange
+		$this->asc->network_settings['themedisplay']='default';
+		$this->asc->network_settings['themesperpage'] = 1;
+		//get the total of wordpress themes
+		$wp_themes =  wp_get_themes();
+
+		//Act
+		$this->asc->getThemes();
+
+		//Assert
+		$this->assertTrue(count($this->asc->themes)==1,"Theme limit not working");
+		$this->assertFalse(count($this->asc->themes) > count($wp_themes));
+	}
+
+	function test_get_themes_pagination_on_view_default(){
+		//Arrange
+		$this->asc->network_settings['themedisplay']='default';
+		$this->asc->network_settings['themesperpage'] = 1;
+
+		//get the total of wordpress themes
+		$wp_themes =  wp_get_themes();
+
+		//Act
+		//only if there are more than 1 default theme
+		if(is_array($wp_themes) && count($wp_themes) > 1){
+			$options = array();
+			$options['page'] = 2;
+
+			$this->asc->getThemes($options);
+
+			//Assert
+			$this->assertTrue(count($this->asc->themes)==1,"Pagination not working");
+		}
+	}
+
+	function test_get_themes_search_on_view_default(){
+		//Arrange
+		$this->asc->network_settings['themedisplay']='default';
+		$this->asc->network_settings['themesperpage'] = 1;
+
+		//get wordpress themes
+		$wp_themes =  wp_get_themes();
+		//select a theme to search
+		$theme_search_query = 'twentythirteen';
+
+		//Act	
+		if(is_array($wp_themes) && count($wp_themes) > 1){
+			foreach ($wp_themes as $key => $value) {
+				if($key==$theme_search_query){
+					//theme found, do the same search for getThemes
+					$options = array();
+					$options['search'] = $theme_search_query;
+
+					$this->asc->getThemes($options);
+
+					//Assert
+					$this->assertTrue(is_array($this->asc->themes));
+					$this->assertTrue(count($this->asc->themes)==1); // A theme was fetched
+					//verify if there is one valid search
+					$found_theme = false;
+					foreach ($this->asc->themes as $key => $value) {
+						if($key==$theme_search_query){
+							$found_theme = true;
+							break;
+						}
+					}
+					$this->assertTrue($found_theme,"No theme was found using the search");
+
+					break;
+				}
+			}
+		}
+	}
+
+
+
 	
 }
