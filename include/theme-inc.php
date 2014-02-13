@@ -25,7 +25,7 @@
 <br class="clear">
 <?php 
 	
-	if(isset($this->paginate['themes'])){
+	if(isset($this->paginate['themes']) && !empty($this->paginate['themes'])){
 		$paginate = $this->paginate['themes'];
 		$position = 'bottom'; 
 		$paginateclass='paginate-themes';
