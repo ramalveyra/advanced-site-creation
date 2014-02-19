@@ -1,5 +1,7 @@
 # Advanced Site Creation Settings [Multisite]
 
+[![Build Status](https://travis-ci.org/Link7/advanced-site-creation.png?branch=master)](https://travis-ci.org/Link7/advanced-site-creation)
+
 This plugin is used to extend the default "Site > Add New" functionality in Wordpress Multisite.
 
 Upon installation and activation, this plugin will add a new option - "Sites > Add New (Advanced)" option.
