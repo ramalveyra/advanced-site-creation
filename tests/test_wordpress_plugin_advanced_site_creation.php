@@ -1,24 +1,39 @@
 <?php
 
 /**
- * Tests to test that that testing framework is testing tests. Meta, huh?
+ * Unit test for the advanced site creation plugin
  *
- * @package wordpress-plugins-tests
+ * @package advanced-site-creation
  */
 
 class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 
-	/* A reference to the plugin */
+	/** 
+	 * A reference to the plugin
+	 * @access private
+	 * @var Advance_Site_Creation_Manager instance 
+	 */
 	private $asc;
 
-	/* References to dependent plugins */
+	/** 
+	 * References to dependent plugins 
+	 * @access private
+	 * @var array
+	 */
 	private $dependent_plugins = array(
 	);
 
+	/**
+	 * Used for testing admin functions
+	 * @access private
+	 * @var int
+	 */
 	protected $administrator_id;
 
-	/* Set and initiate the plugins here */
-	function setUp() {
+	/** 
+	 * Set and initiate the plugins here 
+	 */
+	public function setUp() {
 		parent::setUp();
 
 		// create a super-admin
@@ -35,7 +50,10 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		//Set Wordpress Multisite Domain mapping plugin to test plugin dependencies
 	}
 
-	function tearDown() {
+	/**
+	 * On test end
+	 */
+	public function tearDown() {
 		if ( is_multisite() )
 			revoke_super_admin( $this->administrator_id );
 
@@ -48,7 +66,7 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 	 *
 	 * @requires PHP 5.3
 	 */
-	function test_wp_version() {
+	public function test_wp_version() {
 
 		if ( !getenv( 'TRAVIS' ) )
 			$this->markTestSkipped( 'Test skipped since Travis CI was not detected.' );
@@ -67,7 +85,7 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 	/**
 	 * Ensure that the plugin has been installed and activated.
 	 */
-	function test_plugin_activated() {
+	public function test_plugin_activated() {
 		$this->assertTrue(is_plugin_active('advanced-site-creation/advanced_site_creation.php'));
 	}
 
@@ -79,8 +97,8 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 	}
 
 	/**
-	 * TODO: Check dependent plugins
-	 * Skip this for now
+	 * Check dependent plugins
+	 * @todo Complete the function to check dependent plugins 
 	 */
 	function test_dependent_plugins_activated(){
 		//$this->markTestSkipped();
@@ -91,45 +109,47 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 
 		foreach ($_plugins as $key => $plugin) {
 			if(is_plugin_active($plugin)==FALSE){
-				$this->fail();
+				$this->fail('The dependent plugin "'. $plugin .'" was not active');
 			}
 		}
 	}
 
 	/**
 	 * The plugin core functionality tests 
+	 * 
 	 * Add tests here for the plugins core functionalities
+	 *
 	 */
-
-	// Check if the menu has been added correctly
+	/** 
+	 * function test_plugin_menu_added
+	 * Check if the menu has been added correctly
+	 */
 	function test_plugin_menu_added(){
-		/** 
-		 * Arrange
-		 * set the variables
-		 */
+		
+		//Arrange
+		//set the variables
 		global $advanced_site_creation_menu;
 
 
 		$expected_menu = 'admin_page_site-new-advanced';
 
-		//set_current_screen( 'dashboard-network' );
-		/** 
-		 * Act
-		 */
+		
+		//Act
 		// Create the plugin menu
 		$this->asc->add_advanced_site_creation_menu();
 		
 
-		/** 
-		 * Assert
-		 * Check for existence
-		 */
 		
+		// Assert
+		// Check for existence
 		$this->assertNotNull($advanced_site_creation_menu);
 		$this->assertEquals($expected_menu,$advanced_site_creation_menu);
 
 	}
 
+	/**
+	 * Check if the Javascripts have been loaded
+	 */
 	function test_plugin_js_loaded(){
 		//Arrange
 		//list javascript used by plugin
@@ -145,19 +165,25 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		//Assert
 		foreach($plugin_js as $js){
 			if(wp_script_is($js)===FALSE){
-				$this->fail();
+				$this->fail('The required javascript "'. $js .'" was not loaded');
 			}
 		}
 	}
 
 	/**
-	 * Check plugin settings
+	 * Check the plugin settings
+	 */
+	/**
+ 	 * function test_has_no_settings
+ 	 * Test that by default, the plugin has no settings	
 	 */
 	function test_has_no_settings(){
 		$this->assertFalse($this->asc->network_settings);
 	}
 
-	// Should return null if no post is set;
+	/**
+	 * Should return null if no post is set
+	 */
 	function test_post_empty(){
 
 		//Act
@@ -167,7 +193,9 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		$this->assertFalse($this->asc->network_settings);
 	}
 
-	// Null if $_POST value is not for plugin settings
+	/** 
+	 * Should not set settings if $_POST value is not for plugin settings
+	 */
 	function test_filter_posts(){
 		//Arrange
 		$_POST['random'] = 'dummy';
@@ -180,7 +208,9 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 	}
 
 	
-	// Nonce checking must exists 
+	/** 
+	 * Check if plugin uses nonce
+	 */
 	function test_plugin_settings_nonce_check(){
 		//Arrange
 		$_POST['network_settings'] = array();
@@ -198,7 +228,9 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
         $this->assertTrue($nonce_checked,'Nonce not being checked.');
 	}
 
-	//Field sanitation must exists
+	/**
+	 * Check if plugin sanitize fields
+	 */
 	function test_plugin_settings_field_sanitize(){
 		//Arrange
 		//Create nonce
@@ -219,7 +251,9 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		$this->assertNotEquals($unsanitized_field, $options['unsanitized_field'], 'Fields not being sanitized.');
 	}
 
-	//Check if settings are saved
+	/** 
+	 * Check if plugin settings are saved 
+	 */
 	function test_plugin_settings_set_fields(){
 		//Arrange
 		//Create nonce
@@ -243,7 +277,13 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		}
 	}
 
-	//Test theme fetching
+	/**
+	 * Plugin's core functionality tests
+	 */
+	/**
+	 * function test_get_themes_default
+	 * Check if the themes are fetched (default settings)
+	 */
 	function test_get_themes_default(){
 		//Act
 		$this->asc->getThemes();
@@ -261,6 +301,9 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * Check if the plugin limits the themes fetched
+	 */
 	function test_get_themes_limit_on_view_default(){
 		//Arrange
 		$this->asc->network_settings['themedisplay']='default';
@@ -272,10 +315,13 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		$this->asc->getThemes();
 
 		//Assert
-		$this->assertTrue(count($this->asc->themes)==1,"Theme limit not working");
+		$this->assertTrue(count($this->asc->themes)==1,'Theme limit not working');
 		$this->assertFalse(count($this->asc->themes) > count($wp_themes));
 	}
 
+	/**
+	 * Check whether pagination works (default settings)
+	 */
 	function test_get_themes_pagination_on_view_default(){
 		//Arrange
 		$this->asc->network_settings['themedisplay']='default';
@@ -293,10 +339,13 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 			$this->asc->getThemes($options);
 
 			//Assert
-			$this->assertTrue(count($this->asc->themes)==1,"Pagination not working");
+			$this->assertTrue(count($this->asc->themes)==1,'Pagination not working');
 		}
 	}
 
+	/**
+	 * Check whether search works
+	 */
 	function test_get_themes_search_on_view_default(){
 		//Arrange
 		$this->asc->network_settings['themedisplay']='default';
@@ -328,15 +377,12 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 							break;
 						}
 					}
-					$this->assertTrue($found_theme,"No theme was found using the search");
+					$this->assertTrue($found_theme,'No theme was found using the search');
 
 					break;
 				}
 			}
 		}
 	}
-
-
-
 	
 }
