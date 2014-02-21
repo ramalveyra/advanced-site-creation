@@ -35,6 +35,7 @@ if ( ! is_multisite() )
 	wp_die( __( 'Multisite support is not enabled.' ) );
 
 define('ASC_PLUGIN_URL', plugin_dir_url( __FILE__ ));
+define('ASC_PLUGIN_PATH', __FILE__);
 
 class Advance_Site_Creation_Manager
 {
