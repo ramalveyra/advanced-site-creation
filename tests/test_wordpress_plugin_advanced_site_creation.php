@@ -345,6 +345,10 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 
 	/**
 	 * Check whether search works
+	 *
+	 * This assumes that the test is running on wordpress develop trunk
+	 * git://develop.git.wordpress.org - which contains themes out of the box
+	 * testing agianst default installed theme 'twentythirteen'
 	 */
 	function test_get_themes_search_on_view_default(){
 		//Arrange
@@ -367,8 +371,8 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 					$this->asc->getThemes($options);
 
 					//Assert
-					$this->assertTrue(is_array($this->asc->themes));
-					$this->assertTrue(count($this->asc->themes)==1); // A theme was fetched
+					$this->assertTrue(is_array($this->asc->themes),'No themes array returned.');
+					$this->assertTrue(count($this->asc->themes)==1,'Function returned 0 results to evaluate.'); // A theme was fetched
 					//verify if there is one valid search
 					$found_theme = false;
 					foreach ($this->asc->themes as $key => $value) {
@@ -384,5 +388,157 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 			}
 		}
 	}
-	
+
+	/**
+	 * Check plugins fetching
+	 */
+	/**
+	 * function test_get_plugins
+	 * Check whether plugins are being returned.
+	 */
+	public function test_get_plugins(){
+		//Arrange
+		//fetch if there are plugins within wordpress
+		$wp_plugins = get_plugins();
+		$plugin_name = plugin_basename(ASC_PLUGIN_PATH);
+
+		//fail if empty
+		$this->assertFalse(empty($wp_plugins));
+
+		//Act
+		$this->asc->getPlugins();
+
+		//Assert
+		//Must return a plugin
+		$this->assertFalse(empty($this->asc->allowedPlugins));
+		
+		//This plugin should not be included
+		foreach($this->asc->allowedPlugins as $key=>$plugin){
+			$this->assertNotEquals($key,$plugin_name);
+		}
+
+	}
+
+	/**
+	 * Check if limit and pagination for fetching plugin
+	 */
+	public function test_get_plugins_limit_on_view_default(){
+		//Arrange
+		$this->asc->network_settings['plugindisplay']='default';
+		$this->asc->network_settings['pluginsperpage'] = 1;
+		
+		//get the total of wordpress default plugins
+		$wp_plugins = get_plugins();
+
+		//Act
+		$this->asc->getPlugins();
+
+		//Assert
+		$this->assertTrue(count($this->asc->allowedPlugins)==1,'Plugins limit not working');
+		$this->assertFalse(count($this->asc->allowedPlugins) > count($wp_plugins));
+	}
+
+	/**
+	 * Check whether pagination works for plugins (default settings)
+	 */
+	function test_get_plugins_pagination_on_view_default(){
+		//Arrange
+		$this->asc->network_settings['plugindisplay']='default';
+		$this->asc->network_settings['pluginsperpage'] = 1;
+
+		//get the total of wordpress default plugins
+		$wp_plugins = get_plugins();
+
+		//Act
+		//only if there are more than 1 plugin
+		if(is_array($wp_plugins) && count($wp_plugins) > 1){
+			$options = array();
+			$options['page'] = 2;
+
+			$this->asc->getPlugins($options);
+
+			//Assert
+			$this->assertTrue(count($this->asc->allowedPlugins)==1,'Pagination not working');
+		}
+	}
+
+	/**
+	 * Check whether search for plugin works
+	 *
+	 * This assumes that the test is running on wordpress develop trunk
+	 * git://develop.git.wordpress.org which contains plugins out of the box
+	 * testing agianst default installed plugin 'hello.php'
+	 */
+	function test_get_plugins_search_on_view_default(){
+		//Arrange
+		$this->asc->network_settings['plugindisplay']='default';
+		$this->asc->network_settings['pluginsperpage'] = 1;
+
+		//get wordpress plugins
+		$wp_plugins = get_plugins();
+
+		//select a plugin to search
+		$plugin_search_query = 'hello';
+		$plugin_search_slug = 'hello.php';
+
+		//Act	
+		if(is_array($wp_plugins) && count($wp_plugins) > 1){
+			foreach ($wp_plugins as $key => $wp_plugins) {
+				if($key==$plugin_search_slug){
+					//plugin found, do the same search for getPlugins
+					$options = array();
+					$options['search'] = $plugin_search_query;
+
+					$this->asc->getPlugins($options);
+
+					//Assert
+					$this->assertTrue(is_array($this->asc->allowedPlugins),'No plugins array returned.'); //returned some results
+					$this->assertTrue(count($this->asc->allowedPlugins)==1, 'Function returned 0 results to evaluate.'); // A plugin was fetched
+					//verify if there is one valid search
+					$found_plugin = false;
+
+					foreach ($this->asc->allowedPlugins as $key => $value) {
+						if($key==$plugin_search_slug){
+							$found_plugin = true;
+							break;
+						}
+					}
+					$this->assertTrue($found_plugin,'No plugin was found using the search');
+
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * function test_plugin_blog_creation
+	 *
+	 * Checks whether blog creation with advanced site creation works.
+	 * This assumes that the test is running on wordpress develop trunk
+	 * git://develop.git.wordpress.org which contains themes out of the box
+	 * testing agianst default theme included 'twentythirteen'
+	 * note that auto settings of plugins are not checked as the test does not dynamically create wp_{blog_id}_options for newly created site (multisite)
+	 * and plugins are automatically activated via tests 'bootstrap.php'
+	 */
+	function test_plugin_blog_creation(){
+		//Arrange
+		$user_id = $this->administrator_id;
+		$test_path = '/test_blogname';
+		$test_title = 'Created blog';
+		$set_theme = 'twentythirteen';
+		$_POST['theme-id'] = $set_theme; //Assume that 'twentythirteen' has been selected by the plugin
+		
+		//Act
+		$blog_id = $this->factory->blog->create( array( 'user_id' => $user_id, 'title' => $test_title ));
+		
+		//Assert 
+		$this->assertTrue(is_int($blog_id)); //site was created;
+
+		//check theme
+		switch_to_blog($blog_id);
+		$this->assertEquals(get_bloginfo('template_url'),'http://example.org/wp-content/themes/'.$set_theme);
+		restore_current_blog();
+	}
+
 }
