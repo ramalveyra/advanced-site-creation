@@ -1,5 +1,10 @@
+<div class="wrap">
 <h2><?php echo __('Advanced Site Creation: Settings');?></h2>
 <p><?php echo __('Select the settings you want to be applied when creating a new site.');?></p>
+<?php 
+	if(isset($_POST['network_settings_save'])):?>
+	<div id="message" class="updated"><p><strong><?php _e('Settings saved.')?></strong></p></div>	
+<?php endif;?>
 <form method="post">
 	<?php
 		//create nonce hidden field for security
@@ -55,3 +60,4 @@
 	</table>
 	<p class="submit"><input type="submit" name="network_settings_save" id="network_settings_save" class="button button-primary" value="<?php _e('Save Changes');?>"></p>
 </form>
+</div>

@@ -106,12 +106,14 @@
             }
             
         }
-
+        var req = null;
         //search handle
         var handleSearch = function(e,target){
-            //prevent submission on enter
-            if(e.keyCode == 13) {
-            e.preventDefault();    
+            if (req != null) req.abort();
+
+            var that = this,
+            value = $(this).val();
+
             var search_query = $(this).val();
             if($(this).attr('id')=='theme-search-input'){
                var action = 'get_themes_ajax';
@@ -120,7 +122,7 @@
                var action = 'get_plugins_ajax';
                var nonce = $('#_wpnonce_plugins-search').val(); 
             }
-            $.ajax({
+            req = $.ajax({
                 type : "post",
                 url : asc_ajax.ajaxurl,
                data : {
@@ -132,29 +134,57 @@
                         nonce   : nonce
                     },
                 success: function(response) {
-                    if(action == 'get_themes_ajax'){
-                        $('.theme-browser').html(response);
-                        bindEvents();
-                    }else if(action == 'get_plugins_ajax'){
-                        $('.plugins-browser').html(response);
-                        bindEvents();
+                    if (value==$(that).val()) {
+                        if(action == 'get_themes_ajax'){
+                            $('.theme-browser').html(response);
+                            focusCampo('theme-search-input');
+                            bindEvents();
+                        }else if(action == 'get_plugins_ajax'){
+                            $('.plugins-browser').html(response);
+                            focusCampo('plugins-search-input');
+                            bindEvents();
+                        }
                     }
                 }
             });
-            return false;
-            }
         }
 
+        var preventSubmit = function(e, target){
+            //prevent submission on enter
+            if(e.keyCode == 13) {
+                e.preventDefault();
+                return false;    
+            }
+        }
         var bindEvents = function(){
             $('.theme').bind('click',handleThemeClick);
-            $('#theme-search-input').bind('keypress',handleSearch);
-            $('#plugins-search-input').bind('keypress',handleSearch);
+            $('#theme-search-input').bind('keyup',handleSearch);
+            $('#plugins-search-input').bind('keyup',handleSearch);
+            $('#theme-search-input').bind('keypress',preventSubmit);
+            $('#plugins-search-input').bind('keypress',preventSubmit);
             $('.pagination-links a').bind('click',handlePaginationClicks);
             $('.pagination-links input.current-page').bind('keydown',handlePaginationInput);    
         }
 
+        var focusCampo = function(id){
+            var inputField = document.getElementById(id);
+            if (inputField != null && inputField.value.length != 0){
+                if (inputField.createTextRange){
+                    var FieldRange = inputField.createTextRange();
+                    FieldRange.moveStart('character',inputField.value.length);
+                    FieldRange.collapse();
+                    FieldRange.select();
+                }else if (inputField.selectionStart || inputField.selectionStart == '0') {
+                    var elemLen = inputField.value.length;
+                    inputField.selectionStart = elemLen;
+                    inputField.selectionEnd = elemLen;
+                    inputField.focus();
+                }
+            }else{
+                inputField.focus();
+            }
+        }
+
         bindEvents();
-        
-        
     });
 })(jQuery);
