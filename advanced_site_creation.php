@@ -64,6 +64,9 @@ class Advance_Site_Creation_Manager
 		// option values
 	 	add_action( 'admin_init', array($this,'saveNetworkSettings'));
 
+	 	//Uninstall hook
+	 	register_uninstall_hook(__FILE__, array('Advance_Site_Creation_Manager','advanced_site_creation_uninstall_plugin'));
+
 	 	// creating Ajax call for Themes and Plugins
    		add_action( 'wp_ajax_nopriv_get_themes_ajax', array($this,'get_themes_ajax'));  
    		add_action( 'wp_ajax_get_themes_ajax', array($this,'get_themes_ajax'));
@@ -506,6 +509,19 @@ class Advance_Site_Creation_Manager
             && preg_match("/^.{1,253}$/", $domain_name) //overall length check
             && preg_match("/^[^\.]{1,63}(\.[^\.]{1,63})*$/", $domain_name)   ); //length of each label
 	}
+
+	
+	/**
+	* advanced_site_creation_uninstall_plugin
+	* 
+	* completely removes the plugin installation
+	*
+	* @access public 
+	* @return void
+	*/
+  	public function advanced_site_creation_uninstall_plugin(){
+  		delete_site_option('asc_network_settings');
+  	}
 
 	/** 
 	* Function to filter Themes. 
