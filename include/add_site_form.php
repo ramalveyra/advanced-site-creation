@@ -106,6 +106,30 @@ if ( ! empty( $messages ) ) {
 		</div>
 		<?php break;}?>
 
+	<h3 style="width:100%"><?php _e('New Site Custom Settings')?></h3>
+	<p><em><?php _e('Select custom settings that will be applied to the newly created site');?></em></p>
+	<table class="form-table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('Default article settings')?></th>
+				<td>
+					<label><input name="blog[disable_comments]" type="checkbox" id="blog[disable_comments]" > <?php echo __('Disable comments &amp; pingbacks/trackbacks')?>.</label>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<table class="form-table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('Default site post/page')?></th>
+				<td>
+					<label><input name="blog[remove_default_postpage]" type="checkbox" id="blog[remove_default_postpage]" > <?php echo __('Remove "Hello World" post and "Sample Page" added by Wordpress')?>.</label>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
 	<?php submit_button( __('Add Site'), 'primary', 'add-site' ); ?>
 	</form>
 </div>

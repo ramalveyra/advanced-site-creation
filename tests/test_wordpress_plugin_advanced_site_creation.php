@@ -541,4 +541,66 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		restore_current_blog();
 	}
 
+	/**
+	 * Testcases for 
+	 * https://github.com/Link7/advanced-site-creation/issues/5 
+	 * https://github.com/Link7/advanced-site-creation/issues/6
+	 */
+
+	/**
+	 * function test_plugin_blog_creation_comments_disabled
+	 * 
+	 * Checks whether the new site comments and pingbacks were disabled
+	 * https://github.com/Link7/advanced-site-creation/issues/5
+	 */
+	function test_plugin_blog_creation_comments_disabled(){
+		//Arrange
+		$user_id = $this->administrator_id;
+		$test_path = '/test_blogname';
+		$test_title = 'Created blog';
+		
+		//set the settings for 'Disable comments & pingbacks/trackbacks'
+		$_POST['blog']['disable_comments'] = 'on';
+
+		//Act
+		//create a test site
+		$blog_id = $this->factory->blog->create( array( 'user_id' => $user_id, 'title' => $test_title ));
+
+		//switch to site
+		switch_to_blog($blog_id);
+		//Assert
+		//checks for 'Allow people to post comments on new articles' - must be set to closed
+		$this->assertEquals(get_option( 'default_comment_status' ),'closed');
+		//checks for 'Allow link notifications from other blogs (pingbacks and trackbacks) ' - must be set to closed
+		$this->assertEquals(get_option( 'default_ping_status' ),'closed');
+		restore_current_blog();
+	}
+
+	/**
+	 * function test_plugin_blog_creation_default_post_page_removed 
+	 *
+	 * Checks if the default 'Hello World' and 'Sample Page' have been removed on a new site
+	 * https://github.com/Link7/advanced-site-creation/issues/6
+	 */
+	function test_plugin_blog_creation_default_post_page_removed(){
+		//Arrange
+		$user_id = $this->administrator_id;
+		$test_path = '/test_blogname';
+		$test_title = 'Created blog';
+
+		//set the settings for Remove "Hello World" post and "Sample Page" added by Wordpress.
+		$_POST['blog']['remove_default_postpage'] = 'on';
+
+		//Act
+		//create a test site
+		$blog_id = $this->factory->blog->create( array( 'user_id' => $user_id, 'title' => $test_title ));
+
+		//switch to site
+		switch_to_blog($blog_id);
+		//Assert
+		//Check for the default post (ID 1 and 2)
+		$this->assertNull(get_post(1)); //'Hello World'
+		$this->assertNull(get_post(2)); //'Sample Page'
+		restore_current_blog();
+	}
 }

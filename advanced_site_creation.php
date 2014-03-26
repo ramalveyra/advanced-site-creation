@@ -363,6 +363,12 @@ class Advance_Site_Creation_Manager
 	 		//set the plugins
 	 		$this->setPlugins($blog_id);
 
+	 		//set the custom settings
+	 		$this->setCustomSettings($blog_id);
+
+	 		//remove default post/page
+	 		$this->removeCustomPostPage($blog_id);
+
 	 		//redirect
 	 		$this->redirectToASC($blog_id);		
 	 	}
@@ -466,6 +472,30 @@ class Advance_Site_Creation_Manager
 	 				activate_plugin($sp);
 	 			}
 	 		}
+	 		restore_current_blog();
+	 	}
+	 }
+
+	 /**
+	  * Sets the sites custom settings
+	  */
+	 private function setCustomSettings($blog_id){
+	 	if (!empty($_POST['blog']['disable_comments']) && $_POST['blog']['disable_comments']=='on') {
+	 		switch_to_blog($blog_id);
+	 		update_option('default_ping_status', 'closed');
+	 		update_option('default_comment_status', 'closed');
+	 		restore_current_blog();
+	 	}
+	 }
+
+	 /**
+	  * Removes the sites default post/page	
+	  */
+	 private function removeCustomPostPage($blog_id){
+	 	if (!empty($_POST['blog']['remove_default_postpage']) && $_POST['blog']['remove_default_postpage']=='on') {
+	 		switch_to_blog($blog_id);
+	 		wp_delete_post(1,TRUE);//Hello World - remove from trash
+	 		wp_delete_post(2,TRUE);//Sample page - remove from trash
 	 		restore_current_blog();
 	 	}
 	 }
