@@ -185,6 +185,54 @@
             }
         }
 
+        //handle site cloning
+        //var handleCloneSite = function()
+        $('#add-site').click(function(e){
+            var self = this;
+            //check if option to clone is enabled
+            if($('#create-site-from-template').is(':checked')){
+                //the ajax call
+                var action = 'clone_site_ajax';
+                var nonce = $('#_wpnonce_clone-site').val();
+                $(this).hide();
+                $('.preloader').show(); 
+                $('#clone-log').html('');
+                $('#clone-log').html('Cloning site... \n');
+
+                //the values
+                var values = {}
+                values['domain'] = $('input[name=blog\\[domain\\]]').val();
+                values['title'] = $('input[name=blog\\[title\\]]').val();
+                values['domain_name'] = $('input[name=blog\\[domain_name\\]]').val();
+                values['site_template'] = $('#clone-site-template').val();
+                values['site_user'] = $('#clone-site-user').val()
+
+                $.ajax({
+                    type : "post",
+                    url : asc_ajax.ajaxurl,
+                    data : {
+                        action: action,
+                        values : values,
+                        //current_page : current_page,
+                        //total_pages : total_pages,
+                        //page_action : 'goto-page',
+                        //search_query : search_query,
+                        nonce   : nonce
+                    },
+                    success: function(response) {
+                        if(response.success==true){
+                            $('#clone-log').html($('#clone-log').html()+response.message);
+                        }else{
+                            $('#clone-log').html($('#clone-log').html()+response.message);
+                            $(self).show();
+                            $('.preloader').hide();
+                        }
+                    }
+                });
+                e.preventDefault();    
+            }
+        });
+
         bindEvents();
     });
 })(jQuery);

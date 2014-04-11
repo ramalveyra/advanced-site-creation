@@ -47,6 +47,15 @@ class Advance_Site_Creation_Manager
 	public $search;
 
 	/**
+	 * public site_creation_method
+	 * 
+	 * sets the default site creation
+	 * set as 'clone' to default the feature to site cloning
+	 * set as 'default' for the default site creation settings
+	 */
+	public $site_creation_method = 'clone';
+
+	/**
 	* Set the way plugins are handled e.g. Admin only, required etc.
 	* exclude - exclude the plugin from the list of plugins that can be automatically activated to a site
 	* required - for some site creation feature to work, 'required' plugins must be installed 
@@ -72,6 +81,10 @@ class Advance_Site_Creation_Manager
    		add_action( 'wp_ajax_get_themes_ajax', array($this,'get_themes_ajax'));
    		add_action( 'wp_ajax_nopriv_get_plugins_ajax', array($this,'get_plugins_ajax'));  
    		add_action( 'wp_ajax_get_plugins_ajax', array($this,'get_plugins_ajax'));
+
+   		//Ajax call for cloning site
+   		add_action( 'wp_ajax_nopriv_clone_site_ajax', array($this,'clone_site_ajax'));  
+   		add_action( 'wp_ajax_clone_site_ajax', array($this,'clone_site_ajax'));
 
 	 	//load the settings values
 	 	$this->network_settings = get_site_option( 'asc_network_settings');
@@ -133,6 +146,48 @@ class Advance_Site_Creation_Manager
 	*
 	*/
 	public function site_new_custom(){
+
+		// check the type of creation option
+		if($this->site_creation_method == 'clone'){
+
+			// fetch existing blogs
+			global $wpdb;
+
+			$error = NULL;
+
+			if ( is_multisite() ) { $subdomain_install = is_subdomain_install(); }
+
+			// fetch existing blogs
+			//$the_blogs = get_blog_list( 1, 'all' ); could this also work? ->later
+			$tbl_blogs = $wpdb->prefix ."blogs";
+			$the_blogs = $wpdb->get_results( "SELECT blog_id, domain, path FROM $tbl_blogs WHERE blog_id <> '1'" );
+
+			if (!$subdomain_install) {
+				// trim each value in the array from slashes (subdirs)
+				function removeslash(&$value) { $value = str_replace("/", "", $value); } 
+				for ( $i = 0; $i < sizeof( $the_blogs ); $i++ ) {
+					array_walk($the_blogs[$i], 'removeslash');
+				}
+			}
+
+			// fetch existing users
+			$tbl_users = $wpdb->prefix ."users";
+			$the_users = $wpdb->get_results( "SELECT ID, user_login FROM $tbl_users" );
+
+			// check for errors
+			if(!$the_blogs) { $error['blogs'] = "there are no templates to choose from"; }
+			if(!$the_users) { $error['users'] = "there are no users, which is impossible.."; }
+
+			if(!$error) {
+				$form_action = network_admin_url('sites.php?page=site-new-advanced');
+			}else{
+				$form_action = network_admin_url('site-new.php?action=add-site&advanced=true');
+				$this->site_creation_method = 'default';	
+			}
+		}else{
+			$form_action = network_admin_url('site-new.php?action=add-site&advanced=true');
+		}
+
 		$current_site = get_current_site();
 		include_once('include/add_site_form.php');
 	}
@@ -266,6 +321,89 @@ class Advance_Site_Creation_Manager
 
    		$this->getPlugins($options);
    		include_once('include/plugins-inc.php');
+   		die();
+	}
+
+	/**
+	 * function to handle ajax when cloning site
+	 * 
+	 * this function is mostly taken from Add Cloned Sites for WPMU (batch)
+	 * @credits Frits Jan van Kempen
+	 */
+	public function clone_site_ajax(){
+		//security
+		if ( !wp_verify_nonce( $_REQUEST['nonce'], "clone-site")) {
+      		exit('error');
+   		}
+   		
+   		$response = Array(
+   			'success' => true,
+   			'message' => ''
+   		);
+
+   		// start timing
+		$time_start = microtime(true);
+		$error = NULL;
+		$cloned = NULL;
+		$failed = NULL;
+
+		//prepare values
+		// Get POST data
+		$template_id = $_POST['values']['site_template'];
+		$user_id = $_POST['values']['site_user'];
+		
+		//check for domain name
+		if(empty($_POST['values']['domain_name'])){
+			$domainmap = FALSE;
+		}
+		if (!$this->is_valid_domain_name($_POST['values']['domain_name'])){
+		 	$domainmap = FALSE;
+		}
+		//TODO: Check clone with image
+		$copy_images = FALSE;
+
+		$pluginUrl = ASC_PLUGIN_URL;
+
+		// get admin email
+		$admin_info = get_userdata($user_id);
+		$admin_email = $admin_info->user_email;
+
+		//assign values
+		$siteurl = $_POST['values']['domain'];
+		$blogname = $_POST['values']['title'];
+
+		$site_array[0][0] = $siteurl;
+		//$site_array[0][1] = $blogdescription;
+		$site_array[0][2] = $blogname;
+		$site_array[0][3] = $user_id;
+		$site_array[0][4] = $admin_email;
+		$site_array[0][5] = $template_id;
+
+		//validation
+		$domain = $siteurl . "." . get_blog_details(1)->domain; 
+
+		if(!$this->is_valid_domain_name($domain)){
+			$response['message'] = 'Unable to clone site.'.PHP_EOL;
+			$response['message'].= 'ERR: Invalid site address';
+			$response['success'] = false;
+			header('Content-Type: application/json');
+			echo json_encode($response);
+	   		die();
+		}
+
+
+
+
+
+		//Add some info
+		$message = '';
+		$message.= 'New Site Address: '.$domain.PHP_EOL;
+		$message.= 'New Site Title: '.PHP_EOL;
+		
+		$response['message'] = $message;
+
+		header('Content-Type: application/json');
+		echo json_encode($response);
    		die();
 	}
 
