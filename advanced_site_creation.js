@@ -186,7 +186,22 @@
         }
 
         //handle site cloning
-        //var handleCloneSite = function()
+        //toggle
+        $('#create-site-from-template').click(function(){
+            if(!$('#create-site-from-template').is(':checked')){
+                //show the default
+                $('#clone-site-options').hide();
+                $('#default-site-options').show();
+                $('.default-site-creation').show();
+                $('#add-site-advanced-frm').attr('action',window.location.host + '/wp-admin/network/site-new.php?action=add-site&advanced=true');
+            }else{
+                $('#clone-site-options').show();
+                $('#default-site-options').hide();
+                $('.default-site-creation').hide();
+                $('#add-site-advanced-frm').attr('action',window.location.href);
+            }
+        });
+
         $('#add-site').click(function(e){
             var self = this;
             //check if option to clone is enabled
@@ -205,7 +220,8 @@
                 values['title'] = $('input[name=blog\\[title\\]]').val();
                 values['domain_name'] = $('input[name=blog\\[domain_name\\]]').val();
                 values['site_template'] = $('#clone-site-template').val();
-                values['site_user'] = $('#clone-site-user').val()
+                values['site_user'] = $('#clone-site-user').val();
+                values['include_uploads'] = $('#clone-site-uploads-import').is(':checked')?true:false;
 
                 $.ajax({
                     type : "post",

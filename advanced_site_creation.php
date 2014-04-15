@@ -356,6 +356,8 @@ class Advance_Site_Creation_Manager
 		// Get POST data
 		$template_id = $_POST['values']['site_template'];
 		$user_id = $_POST['values']['site_user'];
+		$include_uploads = $_POST['values']['include_uploads'];
+
 		
 		//check for domain name
 		if(empty($_POST['values']['domain_name'])){
