@@ -335,6 +335,8 @@ class Advance_Site_Creation_Manager
 		if ( !wp_verify_nonce( $_REQUEST['nonce'], "clone-site")) {
       		exit('error');
    		}
+
+   		global $wpdb;
    		
    		$response = Array(
    			'success' => true,
@@ -348,6 +350,9 @@ class Advance_Site_Creation_Manager
 		$failed = NULL;
 
 		//prepare values
+		// check for subdir or subdomain install
+		if ( is_multisite() ) { $subdomain_install = is_subdomain_install(); }
+
 		// Get POST data
 		$template_id = $_POST['values']['site_template'];
 		$user_id = $_POST['values']['site_user'];
@@ -358,7 +363,11 @@ class Advance_Site_Creation_Manager
 		}
 		if (!$this->is_valid_domain_name($_POST['values']['domain_name'])){
 		 	$domainmap = FALSE;
+		}else{
+			$domainmap = TRUE;
+			$domain_name = $_POST['values']['domain_name'];
 		}
+
 		//TODO: Check clone with image
 		$copy_images = FALSE;
 
@@ -366,22 +375,61 @@ class Advance_Site_Creation_Manager
 
 		// get admin email
 		$admin_info = get_userdata($user_id);
+
+		if(!$admin_info){
+			$response['message'] = 'Unable to clone site.'.PHP_EOL;
+			$response['message'].= 'ERR: Invalid user.';
+			$response['success'] = false;
+			header('Content-Type: application/json');
+			echo json_encode($response);
+	   		die();
+		}
+
 		$admin_email = $admin_info->user_email;
 
 		//assign values
 		$siteurl = $_POST['values']['domain'];
 		$blogname = $_POST['values']['title'];
 
+		//validation
+		//check for template blog
+		if(!$wpdb->get_var("SELECT blog_id FROM $wpdb->blogs WHERE blog_id = '$template_id'")) {
+			$response['message'] = 'Unable to clone site.'.PHP_EOL;
+			$response['message'].= 'ERR: Template site does not exist.';
+			$response['success'] = false;
+			header('Content-Type: application/json');
+			echo json_encode($response);
+	   		die();
+		}
+
+		//Get the description
+		switch_to_blog($template_id);
+	 	$blogdescription = get_bloginfo('description');
+    	restore_current_blog();
+
 		$site_array[0][0] = $siteurl;
-		//$site_array[0][1] = $blogdescription;
+		$site_array[0][1] = $blogdescription;
 		$site_array[0][2] = $blogname;
 		$site_array[0][3] = $user_id;
 		$site_array[0][4] = $admin_email;
 		$site_array[0][5] = $template_id;
 
-		//validation
-		$domain = $siteurl . "." . get_blog_details(1)->domain; 
+		// trim each value in the array from whitespaces and left comma's
+		for ( $i = 0; $i < sizeof( $site_array ); $i++ ) {
+			array_walk($site_array[$i], array($this,'acswpmu_trim_value'));
+		}
 
+		if ($subdomain_install) {
+			$domain = $siteurl . "." . get_blog_details(1)->domain; 
+			$fulldomain = $domain;
+			$path = "/";
+		} else {
+			$domain = get_blog_details(1)->domain;
+			$fulldomain = get_blog_details(1)->domain . "/" . $siteurl; 
+			$path = "/" . $domain; 
+		}
+
+		//invalid domain
 		if(!$this->is_valid_domain_name($domain)){
 			$response['message'] = 'Unable to clone site.'.PHP_EOL;
 			$response['message'].= 'ERR: Invalid site address';
@@ -391,14 +439,198 @@ class Advance_Site_Creation_Manager
 	   		die();
 		}
 
-
-
-
-
 		//Add some info
 		$message = '';
 		$message.= 'New Site Address: '.$domain.PHP_EOL;
-		$message.= 'New Site Title: '.PHP_EOL;
+		$message.= 'New Site Title: '.$blogname.PHP_EOL;
+
+		// Check first if domain already exists then add a new site
+		if ($subdomain_install){
+			if($exist_id = $wpdb->get_var("SELECT blog_id FROM $wpdb->blogs WHERE domain = '$fulldomain'")) {
+				$response['message'] = 'Unable to clone site.'.PHP_EOL;
+				$response['message'].= "The URL $fulldomain already exists.";
+				$response['success'] = false;
+				header('Content-Type: application/json');
+				echo json_encode($response);
+		   		die();
+			} else {
+				// Start with adding the new blog to the blogs table
+				$new_blog_id = insert_blog( $domain, $path, '1');
+				if(is_integer($new_blog_id)) {
+					$message.= "New site created with id: $new_blog_id" . PHP_EOL;
+				} else {
+					$response['message'] = 'Unable to clone site.'.PHP_EOL;
+					$response['message'].= "The URL $fulldomain already exist";
+					$response['success'] = false;
+					header('Content-Type: application/json');
+					echo json_encode($response);
+			   		die();		
+				}
+			}
+		//TODO: Check this functionality for sub folder installs	
+		} else {
+			if($exist_id = $wpdb->get_var("SELECT blog_id FROM $wpdb->blogs WHERE path = '$path/'")) {
+				$response['message'] = 'Unable to clone site.'.PHP_EOL;
+				$response['message'].= "The URL $fulldomain already exist";
+				$response['success'] = false;
+				header('Content-Type: application/json');
+				echo json_encode($response);
+		   		die();		
+			} else {
+				// Start with adding the new blog to the blogs table
+				$new_blog_id = insert_blog( $domain, $path, '1');
+				if(is_integer($new_blog_id)) {
+					$message.= "New site created with id: $new_blog_id" . PHP_EOL;
+				} else {
+					$response['message'] = 'Unable to clone site.'.PHP_EOL;
+					$response['message'].= "The URL $fulldomain already exist";
+					$response['success'] = false;
+					header('Content-Type: application/json');
+					echo json_encode($response);
+			   		die();
+				}
+			}
+		}
+
+		//Next duplicate all tables from the template
+		
+		$template_like = $wpdb->prefix . $template_id . "_"; 
+		$template_new = $wpdb->prefix . $new_blog_id . "_";
+		$temp_like = str_replace('_', '\_', $template_like); //escape the _ for correct sql!!
+		$template_tables = $wpdb->get_results( "SHOW TABLES LIKE '$temp_like%'", ARRAY_N );
+		
+		foreach ($template_tables as $old_table) {
+			$new_table = str_replace($template_like, $template_new, $old_table[0]); 
+			// check if table already exists
+			if($wpdb->get_var("SHOW TABLES LIKE '$new_table'") != $new_table) {
+				// duplicate the old table structure
+				$result = $wpdb->query( "CREATE TABLE $new_table LIKE $old_table[0]" );
+				if($result === FALSE) { 
+					$response['message'] = 'Unable to clone site.'.PHP_EOL;
+					$response['message'].= "Failed to create $new_table.";
+					$response['success'] = false;
+					header('Content-Type: application/json');
+					echo json_encode($response);
+			   		die();
+				} else { 
+					$message.= "Table created: $new_table." . PHP_EOL;
+					// copy data from old_table to new_table
+					$result = $wpdb->query( "INSERT INTO $new_table SELECT * FROM $old_table[0]" );
+					if($result === FALSE) {
+						$response['message'] = 'Unable to clone site.'.PHP_EOL;
+						$response['message'].= "Failed to copy data from $old_table[0] to $new_table.";
+						$response['success'] = false;
+						header('Content-Type: application/json');
+						echo json_encode($response);
+				   		die();
+					} else {
+						$message.= "Copied data from $old_table[0] to $new_table." . PHP_EOL;
+					}						
+				}
+			} else {
+				$response['message'] = 'Unable to clone site.'.PHP_EOL;
+				$response['message'].= "The table $new_table already existed.";
+				$response['success'] = false;
+				header('Content-Type: application/json');
+				echo json_encode($response);
+		   		die();
+			}
+		}
+		
+		// Then add user to the new blog
+		$role = "administrator";
+		if ( add_user_to_blog( $new_blog_id, $user_id, $role ) ) {
+			$message.= 'Added user '.$user_id.' as '.$role.' to site '.$new_blog_id.'.' . PHP_EOL;
+		} else {
+			$response['message'] = 'Unable to clone site.'.PHP_EOL;
+			$response['message'].= 'Failed to add user '.$user_id.' as '.$role.' to site '.$new_blog_id.'.';
+			$response['success'] = false;
+			header('Content-Type: application/json');
+			echo json_encode($response);
+	   		die();
+		}
+
+		// Add custom data to newly duplicated blog
+		$full_url = "http://" . $fulldomain;
+		if(!$blogname) { $blogname = $siteurl; }
+		$fileupload_url = $full_url . "/files";
+		
+		// update the cloned table with the new data and blog_id
+		update_blog_option ($new_blog_id, 'siteurl', $full_url);
+		update_blog_option ($new_blog_id, 'blogname', $blogname);
+		update_blog_option ($new_blog_id, 'blogdescription', $blogdescription);
+		update_blog_option ($new_blog_id, 'admin_email', $admin_email);
+		update_blog_option ($new_blog_id, 'home', $full_url);
+		update_blog_option ($new_blog_id, 'fileupload_url', $fileupload_url);
+		update_blog_option ($new_blog_id, 'upload_path', 'wp-content/blogs.dir/' . $new_blog_id . '/files');
+		$new_options_table = $wpdb->prefix . $new_blog_id . '_options';
+		$old_name = $wpdb->prefix . $template_id . '_user_roles';
+		$new_name = $wpdb->prefix . $new_blog_id . '_user_roles';
+		$result = $wpdb->update( $new_options_table, array('option_name' => $new_name), array('option_name' => $old_name));
+		
+		// 'check' if it went ok - NOTE: is just a basic check could give an error anyway...
+		if(get_blog_option($new_blog_id, 'blogdescription') != $blogdescription) { 
+			//$error = TRUE; 
+			//_e("<span class=\"error\">Maybe we had an error updating the options table with the new data.</span>", 'acswpmu_trdom' );
+			$response['message'] = 'Unable to clone site.'.PHP_EOL;
+			$response['message'].= 'An error occured while updating the options table with the new data.';
+			$response['success'] = false;
+			header('Content-Type: application/json');
+			echo json_encode($response);
+	   		die();
+		} else { 
+			//_e("Updated the options table with cloned data<br>", 'acswpmu_trdom' );
+			$message.= "Updated the options table with cloned data." . PHP_EOL;
+		}
+
+		// add template_id to option table for later reference
+		$savearray = array ('template-id' => $template_id, 'lasttime' => time());
+		add_blog_option ($new_blog_id, 'add-cloned-sites', serialize($savearray));
+
+		// Domainmap the newly cloned site
+		if($domainmap AND $domain_name){
+			//check if Wordpress MU Domain mapping plugin installed and active
+			if(array_key_exists('wordpress-mu-domain-mapping/domain_mapping.php', $this->plugins)){
+				$domain = strtolower($domain_name);
+				if ( $new_blog_id != 0 AND 
+						$new_blog_id != 1 AND 
+						null == $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM {$wpdb->dmtable} WHERE blog_id != %d AND domain = %s", $new_blog_id, $domain ) ) 
+					) {
+					$result = $wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->dmtable} ( `blog_id`, `domain`, `active` ) VALUES ( %d, %s, %d )", $new_blog_id, $domain,1) );
+					//echo "<p><strong>" . __( 'Domain Add', 'wordpress-mu-domain-mapping' ) . "</strong></p>";
+					if($result) { 
+						$message.= "New site mapped to domain: $domain." . PHP_EOL;
+					} else { 
+						$message.= "Domain mapping for $siteurl failed." . PHP_EOL;
+					}	
+				}
+			}else{
+				$message.= "Domain not mapped because the required plugin is missing" . PHP_EOL;
+			}
+		}
+
+		//TODO: Copy images and uploads
+
+		//reset permalink structure
+		switch_to_blog($new_blog_id);
+		//_e("Switched from here to $new_blog_id to reset permalinks<br>", 'acswpmu_trdom' );
+		global $wp_rewrite;
+		$wp_rewrite->init();
+		$wp_rewrite->flush_rules();
+		//now that we are here, update the date of the new site
+		wpmu_update_blogs_date( );
+		//go back to admin
+		restore_current_blog();
+		$message.= "Permalinks updated." . PHP_EOL;
+
+		//Done cloning! show reports
+		$time_end = microtime(true);
+		$time = $time_end - $time_start;
+		$time = round($time, 4);
+
+		$message.= "Done cloning site." . PHP_EOL;
+		$message.= "Time elapsed: $time. seconds" . PHP_EOL;
+
 		
 		$response['message'] = $message;
 
@@ -647,6 +879,8 @@ class Advance_Site_Creation_Manager
             && preg_match("/^.{1,253}$/", $domain_name) //overall length check
             && preg_match("/^[^\.]{1,63}(\.[^\.]{1,63})*$/", $domain_name)   ); //length of each label
 	}
+
+	public function acswpmu_trim_value(&$value) { $value = trim(trim($value), ' ,');}
 
 	
 	/**

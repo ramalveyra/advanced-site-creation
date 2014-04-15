@@ -222,6 +222,8 @@
                     success: function(response) {
                         if(response.success==true){
                             $('#clone-log').html($('#clone-log').html()+response.message);
+                            $(self).show();
+                            $('.preloader').hide();
                         }else{
                             $('#clone-log').html($('#clone-log').html()+response.message);
                             $(self).show();

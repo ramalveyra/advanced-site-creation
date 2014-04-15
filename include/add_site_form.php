@@ -94,7 +94,7 @@ if ( ! empty( $messages ) ) {
 					</select> <br> <em><?php echo __('Select the user who will become the admin for the new site.')?></em></p></td>
 			</tr>
 			<tr class="form-field">
-				<td>
+				<td colspan="2">
 					<pre id="clone-log"></pre>
 				</td>
 			</tr>
