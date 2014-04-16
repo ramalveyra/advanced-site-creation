@@ -358,7 +358,6 @@ class Advance_Site_Creation_Manager
 		$user_id = $_POST['values']['site_user'];
 		$include_uploads = $_POST['values']['include_uploads'];
 
-		
 		//check for domain name
 		if(empty($_POST['values']['domain_name'])){
 			$domainmap = FALSE;
@@ -369,9 +368,6 @@ class Advance_Site_Creation_Manager
 			$domainmap = TRUE;
 			$domain_name = $_POST['values']['domain_name'];
 		}
-
-		//TODO: Check clone with image
-		$copy_images = FALSE;
 
 		$pluginUrl = ASC_PLUGIN_URL;
 
@@ -407,6 +403,7 @@ class Advance_Site_Creation_Manager
 		//Get the description
 		switch_to_blog($template_id);
 	 	$blogdescription = get_bloginfo('description');
+	 	//$template_upload_dir = wp_upload_dir();
     	restore_current_blog();
 
 		$site_array[0][0] = $siteurl;
@@ -572,16 +569,13 @@ class Advance_Site_Creation_Manager
 		
 		// 'check' if it went ok - NOTE: is just a basic check could give an error anyway...
 		if(get_blog_option($new_blog_id, 'blogdescription') != $blogdescription) { 
-			//$error = TRUE; 
-			//_e("<span class=\"error\">Maybe we had an error updating the options table with the new data.</span>", 'acswpmu_trdom' );
 			$response['message'] = 'Unable to clone site.'.PHP_EOL;
 			$response['message'].= 'An error occured while updating the options table with the new data.';
 			$response['success'] = false;
 			header('Content-Type: application/json');
 			echo json_encode($response);
 	   		die();
-		} else { 
-			//_e("Updated the options table with cloned data<br>", 'acswpmu_trdom' );
+		} else {
 			$message.= "Updated the options table with cloned data." . PHP_EOL;
 		}
 
@@ -611,11 +605,61 @@ class Advance_Site_Creation_Manager
 			}
 		}
 
-		//TODO: Copy images and uploads
+		// Disabling this function as it is not compatible for MU
+		// Copy images and uploads
+		// SPECIAL NOTE: This part of the code (copy files) I got from the plugin:
+		// "new blog templates" by Jason DeVelvis and Ulrich Sossou
+		// Special thanks go to you guys!
+		if($include_uploads) {
+			/*global $wp_filesystem;
+
+			$dir_to_copy = ABSPATH . 'wp-content/blogs.dir/' . $template_id . '/files';
+			$dir_to_copy_into = ABSPATH .'wp-content/blogs.dir/' . $new_blog_id . '/files';
+
+			//$dir_to_copy = $template_upload_dir['basedir'];
+			//change end ID to new template id
+			//$dir_to_copy_into = str_replace('sites/'.$template_id,'sites/'.$new_blog_id,$dir_to_copy);
+
+			if ( is_dir( $dir_to_copy ) ) {
+
+				if ( wp_mkdir_p( $dir_to_copy_into ) ) {
+
+					require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php' );
+					require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php' );
+
+					if( isset( $wp_filesystem ) )
+						$orig_filesystem = wp_clone( $wp_filesystem );
+					$wp_filesystem = new WP_Filesystem_Direct( false );
+
+					if ( ! defined('FS_CHMOD_DIR') )
+						define('FS_CHMOD_DIR', 0755 );
+					if ( ! defined('FS_CHMOD_FILE') )
+						define('FS_CHMOD_FILE', 0644 );
+
+					copy_dir( $dir_to_copy, $dir_to_copy_into );
+
+					unset( $wp_filesystem );
+					if( isset( $orig_filesystem ) )
+						$wp_filesystem = wp_clone( $orig_filesystem );
+
+					if ( @file_exists( $dir_to_copy_into . '/sitemap.xml' ) )
+						@unlink( $dir_to_copy_into . '/sitemap.xml' );
+
+					$message.= "Copying files from $dir_to_copy to $dir_to_copy_into." . PHP_EOL;
+
+				} else {
+					$response['message'] = 'Unable to clone site.'.PHP_EOL;
+					$response['message'].= 'An error occured while copying uploads.';
+					$response['success'] = false;
+					header('Content-Type: application/json');
+					echo json_encode($response);
+			   		die();
+				}
+			}*/
+		}
 
 		//reset permalink structure
 		switch_to_blog($new_blog_id);
-		//_e("Switched from here to $new_blog_id to reset permalinks<br>", 'acswpmu_trdom' );
 		global $wp_rewrite;
 		$wp_rewrite->init();
 		$wp_rewrite->flush_rules();
@@ -631,7 +675,7 @@ class Advance_Site_Creation_Manager
 		$time = round($time, 4);
 
 		$message.= "Done cloning site." . PHP_EOL;
-		$message.= "Time elapsed: $time. seconds" . PHP_EOL;
+		$message.= "Time elapsed: $time seconds" . PHP_EOL;
 
 		
 		$response['message'] = $message;

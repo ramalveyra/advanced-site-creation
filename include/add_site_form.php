@@ -93,12 +93,12 @@ if ( ! empty( $messages ) ) {
 						?>
 					</select> <br> <em><?php echo __('Select the user who will become the admin for the new site.')?></em></p></td>
 			</tr>
-			<tr>
+			<!--<tr>
 				<th scope="row"><?php _e('Include images and uploads')?></th>
 				<td>
 					<label><input name="clone-site-uploads-import" type="checkbox" id="clone-site-uploads-import"> <?php echo __('Include site images and uploads. Disable this if you have setup a different method for uploads.')?></label>
 				</td>	
-			</tr>
+			</tr>-->
 			<tr class="form-field">
 				<td colspan="2">
 					<pre id="clone-log"></pre>
