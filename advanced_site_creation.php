@@ -123,7 +123,68 @@ class Advance_Site_Creation_Manager
 	       array($this,'setPluginSettings')
   		);
   		add_action("load-$advanced_site_creation_menu", array($this,'getThemes'));
+
+  		//Build site settings menu
+  		$build_site_settings_page = add_submenu_page(
+	       'settings.php',
+	       'Advanced Site Creation: Build Site Settings',
+	       'Build Site Settings',
+	       'manage_network_options',
+	       'asc_build_site_settings',
+	       array($this,'build_site_settings_page')
+  		);
+  		//the post action
+  		add_action('load-'.$build_site_settings_page, array($this,'build_site_settings_page_post'));
+
+  		//Build Site Page
+  		$build_site_page = add_submenu_page(
+	       'sites.php',
+	       'Build Site',
+	       'Build Site',
+	       'manage_options',
+	       'asc_build_site',
+	       array($this,'build_site_page')
+  		);
 	}
+
+	/**
+	 * Build site settings functions
+	 */
+	public function build_site_settings_page(){
+		wp_register_script( 'select2.js', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'lib' . DIRECTORY_SEPARATOR . 'select2-3.4.5' . DIRECTORY_SEPARATOR .'select2.js');
+        wp_enqueue_script( 'select2.js' );
+        wp_enqueue_style( 'select2.css', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'lib' . DIRECTORY_SEPARATOR . 'select2-3.4.5' . DIRECTORY_SEPARATOR .'select2.css' );
+
+        wp_register_script( 'jquery-ui-1.10.4.custom.min.js', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/js/jquery-ui-1.10.4.custom.min.js' );
+        wp_enqueue_script( 'jquery-ui-1.10.4.custom.min.js' );
+        wp_enqueue_style( 'flick.css', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/css/flick/jquery-ui-1.10.4.custom.min.css' );
+
+		//build the settings form
+	 	include_once('include/build_site_settings_page.php');
+	}
+
+	/**
+	 * The Build Site Page
+	 */
+	public function build_site_page(){
+		wp_register_script( 'select2.js', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'lib' . DIRECTORY_SEPARATOR . 'select2-3.4.5' . DIRECTORY_SEPARATOR .'select2.js');
+        wp_enqueue_script( 'select2.js' );
+        wp_enqueue_style( 'select2.css', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'lib' . DIRECTORY_SEPARATOR . 'select2-3.4.5' . DIRECTORY_SEPARATOR .'select2.css' );
+
+        wp_register_script( 'jquery-ui-1.10.4.custom.min.js', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/js/jquery-ui-1.10.4.custom.min.js' );
+        wp_enqueue_script( 'jquery-ui-1.10.4.custom.min.js' );
+        wp_enqueue_style( 'flick.css', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/css/flick/jquery-ui-1.10.4.custom.min.css' );
+
+		//build site form
+	 	include_once('include/build_site_page.php');
+	}
+
+	public function build_site_settings_page_post(){
+		if(isset($_POST['build_site_settings_page_POST']) && $_POST['build_site_settings_page_POST']=='Y'){
+			echo 'post called';
+		}
+	}
+
 	public function redirectToASC($blog_id)
 	{
 		if(isset($_GET['advanced'])){
