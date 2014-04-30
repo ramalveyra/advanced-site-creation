@@ -29,6 +29,7 @@
 /** Load WordPress Administration Bootstrap */
 require_once(ABSPATH.'/wp-admin/includes/admin.php');
 require_once(ABSPATH.'/wp-admin/includes/theme.php');
+require_once('include/inc_build_site.php');
 
 
 if ( ! is_multisite() )
@@ -45,6 +46,7 @@ class Advance_Site_Creation_Manager
 	public $network_settings = array();
 	public $paginate = array();
 	public $search;
+	public $build_site;
 
 	/**
 	 * public site_creation_method
@@ -89,8 +91,8 @@ class Advance_Site_Creation_Manager
 	 	//load the settings values
 	 	$this->network_settings = get_site_option( 'asc_network_settings');
 		$this->getPlugins();
-		 
 	}
+
 	public function loadJS(){
 		wp_register_script( 'advanced_site_creation.js', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'advanced_site_creation.js');
         wp_enqueue_script( 'advanced_site_creation.js' );
@@ -145,6 +147,12 @@ class Advance_Site_Creation_Manager
 	       'asc_build_site',
 	       array($this,'build_site_page')
   		);
+
+  		$this->getThemes();
+  		$this->getPlugins();
+  		$this->build_site = new Advanced_Site_Creation_Site_Builder;
+  		$this->build_site->setThemeOptions($this->themes);
+  		$this->build_site->setPluginOptions($this->allowedPlugins);
 	}
 
 	/**
@@ -159,7 +167,7 @@ class Advance_Site_Creation_Manager
         wp_enqueue_script( 'jquery-ui-1.10.4.custom.min.js' );
         wp_enqueue_style( 'flick.css', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/css/flick/jquery-ui-1.10.4.custom.min.css' );
 
-		//build the settings form
+        //build the settings form
 	 	include_once('include/build_site_settings_page.php');
 	}
 
@@ -181,7 +189,7 @@ class Advance_Site_Creation_Manager
 
 	public function build_site_settings_page_post(){
 		if(isset($_POST['build_site_settings_page_POST']) && $_POST['build_site_settings_page_POST']=='Y'){
-			echo 'post called';
+			$this->build_site->saveUserSettings($_POST);
 		}
 	}
 
