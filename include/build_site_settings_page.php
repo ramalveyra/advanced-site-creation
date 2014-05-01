@@ -36,25 +36,6 @@
 <div id="accordion">
 <h3>Reading Settings</h3>
 <div>
-	<h4>Front page displays</h4>
-	<table class="asc_option_table">
-		<tr>
-			<th>Option Code</th>
-			<th>Values</th>
-			<th>Include on site creation</th>
-			<th>Randomize</th>
-		</tr >
-		<tr>
-		<td class="label"><em>show_on_front</em></td>
-		<td class="values">
-			<input type="text" name="show_on_front" id="show_on_front" value="<?php echo $this->build_site->getSettings('values','show_on_front');?>" readonly />
-			<p><em>'Static Page' option can only be set if there is a page/post available within the site. Changed this setting after you've created the site and added post/page you want to use as a front page.</em></p>
-		</td>
-		<td><input name="show_on_front_is_included" type="checkbox" id="show_on_front_is_included" value="1" <?php if($this->build_site->getSettings('is_included','show_on_front')==TRUE){echo 'checked';}?> ></td>
-		<td><input name="show_on_front_is_rand" type="checkbox" id="show_on_front_is_rand" value="1" <?php if($this->build_site->getSettings('is_rand','show_on_front')==TRUE){echo 'checked';}?>></td>
-		</tr>
-	</table>
-
 	<h4>Blog pages show at most</h4>
 	<table class="asc_option_table">
 		<tr>
@@ -321,6 +302,7 @@
 	<table class="asc_option_table">
 		<tr>
 			<th>Avaiable Themes</th>
+			<th>Include on site creation</th>
 			<th>Randomize</th>
 		</tr>
 		<tr>
@@ -332,6 +314,7 @@
 					<?php endforeach;?>
 				</select>
 			</td>
+			<td><input name="themes_is_included" type="checkbox" id="themes_is_included" value="1" <?php if($this->build_site->getSettings('is_included','themes')==TRUE){echo 'checked';}?>></td>
 			<td><input name="themes_is_rand" type="checkbox" id="themes_is_rand" value="1" <?php if($this->build_site->getSettings('is_rand','themes')==TRUE){echo 'checked';}?>></td>
 		</tr>
 	</table>
@@ -344,6 +327,7 @@
 	<table class="asc_option_table">
 		<tr>
 			<th>Avaiable Plugins</th>
+			<th>Include on site creation</th>
 			<th>Randomize Settings</th>
 		</tr>
 		<tr>
@@ -355,6 +339,7 @@
 					<?php endforeach;?>
 				</select>
 			</td>
+			<td><input name="plugins_is_included" type="checkbox" id="plugins_is_included" value="1" <?php if($this->build_site->getSettings('is_included','plugins')==TRUE){echo 'checked';}?>></td>
 			<td><input name="plugins_is_rand" type="checkbox" id="plugins_is_rand" value="1" <?php if($this->build_site->getSettings('is_rand','plugins')==TRUE){echo 'checked';}?>></td>
 		</tr>
 	</table>

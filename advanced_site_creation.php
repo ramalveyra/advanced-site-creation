@@ -47,6 +47,7 @@ class Advance_Site_Creation_Manager
 	public $paginate = array();
 	public $search;
 	public $build_site;
+	public $build_site_settings;
 
 	/**
 	 * public site_creation_method
@@ -142,7 +143,7 @@ class Advance_Site_Creation_Manager
   		$build_site_page = add_submenu_page(
 	       'sites.php',
 	       'Build Site',
-	       'Build Site',
+	       'Build Site (Advanced)',
 	       'manage_options',
 	       'asc_build_site',
 	       array($this,'build_site_page')
@@ -182,6 +183,16 @@ class Advance_Site_Creation_Manager
         wp_register_script( 'jquery-ui-1.10.4.custom.min.js', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/js/jquery-ui-1.10.4.custom.min.js' );
         wp_enqueue_script( 'jquery-ui-1.10.4.custom.min.js' );
         wp_enqueue_style( 'flick.css', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/css/flick/jquery-ui-1.10.4.custom.min.css' );
+
+        //prepare the values
+        //check for randomized is clicked
+        $rand = false;
+        if(isset($_GET['rand'])){
+        	if($_GET['rand'] == true){
+        		$rand = $_GET['rand'];
+        	}
+        }
+        $this->build_site->setSiteSettings($rand);
 
 		//build site form
 	 	include_once('include/build_site_page.php');
