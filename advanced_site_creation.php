@@ -48,6 +48,21 @@ class Advance_Site_Creation_Manager
 	public $search;
 	public $build_site;
 	public $build_site_settings;
+	public $notice;
+	public $whitelist_options = array(
+		'posts_per_page',
+		'posts_per_rss',
+		'rss_use_excerpt',
+		'blog_public',
+		'default_pingback_flag',
+		'default_ping_status',
+		'default_comment_status',
+		'comments_notify',
+		'moderation_notify',
+		'permalink_structure',
+		'category_base',
+		'tag_base'
+	);
 
 	/**
 	 * public site_creation_method
@@ -194,7 +209,7 @@ class Advance_Site_Creation_Manager
         }
         $this->build_site->setSiteSettings($rand);
 
-		//build site form
+        //build site form
 	 	include_once('include/build_site_page.php');
 	}
 
@@ -210,7 +225,13 @@ class Advance_Site_Creation_Manager
 			if($_GET['advanced']==true && $blog_id!==''){
 				wp_redirect( admin_url( 'network/sites.php?page=site-new-advanced&update=added&id='.$blog_id)); 
 	    		exit;
-			}	
+			}
+		//From Build site page
+		}else if(isset($_GET['build_site'])){
+			if($_GET['build_site']==true && $blog_id!==''){
+				wp_redirect( admin_url( 'network/sites.php?page=asc_build_site&update=added&id='.$blog_id)); 
+	    		exit;
+			}		
 		}else{
 			if(isset($this->network_settings['removedefaultadd'])){
 	 			if($this->network_settings['removedefaultadd']=='on'){
@@ -278,7 +299,7 @@ class Advance_Site_Creation_Manager
 		$search = null;
 		$this->paginate['themes'] = array(); //refresh the pagination
 
-		$this->themes = wp_get_themes();
+		$this->themes = wp_get_themes(array('allowed'=>'network'));
 
 		//check if default is selected
 		if(isset($this->network_settings['themedisplay'])){
@@ -853,6 +874,9 @@ class Advance_Site_Creation_Manager
 	public function advanced_site_configs($blog_id){
 	 	// Make sure the user can perform this action and the request came from the correct page.
 	 	if(current_user_can('manage_options')){
+	 		//change some general settings
+	 		$this->setGeneralSettings($blog_id);
+
 	 		//automatically set domain mapping
 	 		$this->setDomainMap($blog_id);
 	 		
@@ -868,9 +892,66 @@ class Advance_Site_Creation_Manager
 	 		//remove default post/page
 	 		$this->removeCustomPostPage($blog_id);
 
+	 		//remove default widgets
+	 		$this->removeDefaultWidgets($blog_id);
+
+	 		//remove emailer when new sites are created
+	 		$this->removeNewSiteNotif();
+
+	 		//the site settings
+	 		$this->setUserSettings($blog_id);
+	 		
 	 		//redirect
 	 		$this->redirectToASC($blog_id);		
 	 	}
+	 }
+
+	 public function setUserSettings($blog_id){
+	 	//check if settings are available ('has_user_settings' POST var)
+	 	if(isset($_POST['has_user_settings']) && $_POST['has_user_settings'] == true){
+	 		switch_to_blog($blog_id);
+		 	foreach($this->whitelist_options as $option){
+		 		$set_option = isset($_POST[$option])? $_POST[$option] : '';
+		 		update_option($option,$_POST[$option]);
+		 	}
+		 	restore_current_blog();
+	 	}
+	 }
+
+	 public function removeNewSiteNotif(){
+	 	if (!empty($_POST['blog']['remove_new_site_notif']) && $_POST['blog']['remove_new_site_notif']=='on') {
+	 		add_filter( 'wpmu_welcome_notification', array($this,'db_remove_new_site_notification_email' ));	
+	 	}
+	 }
+	 /**
+	  * Overwriting new site notification mail
+	  */ 
+	 function db_remove_new_site_notification_email( $blog_id, $user_id, $password, $title, $meta ) {
+		return false;
+	 }
+	 /**
+	  *
+	  */
+	 public function removeDefaultWidgets($blog_id){
+	 	if (!empty($_POST['blog']['remove_default_widgets']) && $_POST['blog']['remove_default_widgets']=='on') {
+	 		switch_to_blog($blog_id);
+	 		update_option('sidebars_widgets','');
+	 		restore_current_blog();
+	 	}		
+	 }
+	 public function remove_default_widgets() {
+		unregister_widget('WP_Widget_Search');
+	 }
+
+	 public function setGeneralSettings($blog_id){
+	 	//Blog description
+	 	if(!empty($_POST['blog']['tagline'])){
+			switch_to_blog($blog_id);
+			$blogdescription = trim($_POST['blog']['tagline']);
+			$blogdescription = wp_unslash($blogdescription);
+			update_option('blogdescription', $blogdescription);
+			restore_current_blog();
+		}
 	 }
 
 	 public function setPluginSettings(){

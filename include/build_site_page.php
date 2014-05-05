@@ -26,13 +26,27 @@
 </style>
 <div class="wrap">
 <h2><?php echo __('Advanced Site Creation: Build Site');?></h2>
+
+<?php if ( isset($_GET['update']) ) {
+		$messages = array();
+		if ( 'added' == $_GET['update'] )
+			$messages[] = sprintf( __( 'Site added. <a href="%1$s">Visit Dashboard</a> or <a href="%2$s">Edit Site</a>' ), esc_url( get_admin_url( absint( $_GET['id'] ) ) ), network_admin_url( 'site-info.php?id=' . absint( $_GET['id'] ) ) );
+	}
+?>
+<?php
+if ( ! empty( $messages ) ) {
+	foreach ( $messages as $msg )
+		echo '<div id="message" class="updated"><p>' . $msg . '</p></div>';
+} ?>
+
 <p> You can build a new site based on the settings you configured in <a href="#">Settings > Build Site Settings.</a> If you haven't configured the settings yet, It will use Wordpress default settings.</p>
 <p> Press the 'Randomize Settings' button to generate random values for each settings. You can configure these values in <a href="#">Settings > Build Site Settings.</a> as well.</p>
 <p> An option is available to Clone an existing site. An option is available as well to clone a site and apply the settings configured below.</p>
 
 <a href="<?php echo network_admin_url('sites.php?page=asc_build_site&rand=true');?>" class="button-secondary">Randomize Settings</a>
 <br/><br/>
-<form method="post">
+<form method="post" action="<?php echo network_admin_url('site-new.php?action=add-site&build_site=true')?>">
+<?php wp_nonce_field( 'add-blog', '_wpnonce_add-blog' ) ?>
 <div id="asc_site_settings">
 	<h3>General Settings</h3>
 	<div>
@@ -49,6 +63,10 @@
 				<td><input name="blog[title]" type="text" class="regular-text" title="Title"></td>
 			</tr>
 			<tr>
+				<th scope="row">Tagline</th>
+				<td><input name="blog[tagline]" type="text" class="regular-text" title="Tagline"></td>
+			</tr>
+			<tr>
 				<th scope="row">Admin Email</th>
 				<td><input name="blog[email]" type="text" class="regular-text" title="Email"></td>
 			</tr>
@@ -57,7 +75,10 @@
 			</tr>
 			<tr >
 					<th scope="row">Domain Name</th>
-					<td><input class="regular-text" type="text" title="Domain Name" name="blog[domain_name]"><p>Supply domain name that will be mapped to the site with the WordPress MU Domain Mapping plugin <br> <em>* WordPress MU Domain Mapping plugin must be activated</em></p></td>
+					<td><input class="regular-text" type="text" title="Domain Name" name="blog[domain_name]">
+						<p>Supply domain name that will be mapped to the site with the WordPress MU Domain Mapping plugin 
+						<br> <em>* WordPress MU Domain Mapping plugin must be activated</em> 
+						<br> <strong>Important note: </strong> Make sure that the value entered above is a valid and registered DNS before mapping to your site.</p></td>
 			</tr>
 		</tbody>
 		</table>
@@ -275,11 +296,11 @@
 				<th scope="row"><?php _e('Select Theme');?></th>
 				<td>
 					<select title="Theme" name="theme-id" id="theme-id-multi" style="width:50%">
-						<?php if(!empty($this->build_site->_default_settings['themes']['values'])):?>
+						<?php if(!empty($this->build_site->_user_settings['themes']['values'])):?>
 							<?php foreach($this->build_site->_default_settings['themes']['values'] as $theme):?>
-							<?php if(in_array($theme['value'],$this->build_site->_user_settings['themes']['values'])):?>
-								<option value="<?php echo $theme['value']?>" <?php selected($theme['value'],$themes)?>><?php echo $theme['text']?></option>	
-							<?php endif;?>
+								<?php if(array_search($theme['value'],($this->build_site->_user_settings['themes']['values']))!==false):?>
+									<option value="<?php echo $theme['value']?>" <?php selected($theme['value'],$themes)?>><?php echo $theme['text']?></option>
+								<?php endif;?>
 							<?php endforeach;?>
 						<?php endif;?>
 					</select>
@@ -300,11 +321,11 @@
 			<tr class="form-field form-required">
 				<th scope="row"><?php _e('Select Plugins');?></th>
 				<td>
-					<select multiple title="plugins" name="plugins[]" id="plugins-multiselect" style="width:100%">
+					<select multiple title="plugins" name="blog[checked-plugins][]" id="plugins-multiselect" style="width:100%">
 						<?php foreach($this->build_site->_default_settings['plugins']['values'] as $plugin):?>
-						<?php if(in_array($plugin['value'],$this->build_site->_user_settings['plugins']['values'])):?>
-							<option value="<?php echo $plugin['value']?>" selected><?php echo $plugin['text']?></option>	
-						<?php endif;?>
+							<?php if(array_search($plugin['value'],($this->build_site->_user_settings['plugins']['values']))!==false):?>
+								<option value="<?php echo $plugin['value']?>" selected><?php echo $plugin['text']?></option>
+							<?php endif;?>
 						<?php endforeach;?>
 					</select>
 				</td>
@@ -316,6 +337,32 @@
 		<?php endif;?>
 	</div>
 	<?php endif;?>
+	<h3>Custom Settings</h3>
+	<div>
+		<p>Select custom settings that will be applied to your new site.</p>
+		<table class="asc_option_table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('Default site post/page')?></th>
+				<td>
+					<label><input name="blog[remove_default_postpage]" type="checkbox" id="blog[remove_default_postpage]"> <?php echo __('Remove "Hello World" post and "Sample Page" added by Wordpress')?>.</label>
+				</td>
+			</tr>
+			<tr valign="top">
+				<th scope="row"><?php echo __('Default site widgets')?></th>
+				<td>
+					<label><input name="blog[remove_default_widgets]" type="checkbox" id="blog[remove_default_widgets]"> <?php echo __('Remove Default Widgets added to the new site')?>.</label>
+				</td>
+			</tr>
+			<tr valign="top">
+				<th scope="row"><?php echo __('New Site Notifications')?></th>
+				<td>
+					<label><input name="blog[remove_new_site_notif]" type="checkbox" id="blog[remove_new_site_notif]"> <?php echo __('Don\'t send email notifications after new site has been created.')?>.</label>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+	</div>
 </div>
 <br/>
 <a href="<?php echo network_admin_url('sites.php?page=asc_build_site&rand=true');?>" class="button-secondary">Randomize Settings</a>
@@ -326,12 +373,12 @@
 	<tbody>
 		<tr valign="top">
 			<td>
-				<label><input name="create-site-from-template" type="checkbox" id="create-site-from-template" checked="checked"> Copy templates, plugins and settings from a site.</label>
+				<label><input name="create-site-from-template" type="checkbox" id="create-site-from-template"> Copy templates, plugins and settings from a site.</label>
 			</td>
 		</tr>
 		<tr valign="top">
 			<td>
-				<label><input name="overwrite-clone-site-settings" type="checkbox" id="overwrite-clone-site-settings" checked="checked"> Overwrite cloned site settings. Copy templates, plugins and settings from a site but use the above settings instead.</label>
+				<label><input name="overwrite-clone-site-settings" type="checkbox" id="overwrite-clone-site-settings"> Overwrite cloned site settings. Copy templates, plugins and settings from a site but use the above settings instead.</label>
 			</td>
 		</tr>
 	</tbody>
@@ -356,6 +403,7 @@
 			</tr>
 </table>
 <p><em>* For <strong>Plugins</strong>, unchecking the above clone options will activate plugins selected on the settings group.</em></p>
+<input type="hidden" name="has_user_settings" value="true" />
 <input type="submit" name="submit" class="button-primary" value="Build New Site" /> 
 </form>
 <script type="text/javascript">

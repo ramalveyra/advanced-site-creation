@@ -342,7 +342,7 @@ class Advanced_Site_Creation_Site_Builder
 		}
 		//for permalinks, select between pre-defined structure or custom structure
 		$this->site_settings['permalink_structure'] = (rand(0,1)==0)?$this->site_settings['permalink_structure'] : $this->site_settings['permalink_structure_custom'];
-		//var_dump($this->site_settings);
+		
 		//var_dump($this->_user_settings['plugins']);
 	}
 
