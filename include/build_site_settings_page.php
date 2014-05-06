@@ -323,7 +323,9 @@
 <h3>Plugins</h3>
 <div>
 	<h3>Allowed Plugins</h3>
-	<p><em>Select the plugins you would like to be available during site creation.</em></p>
+	<p><em>Select the plugins you would like to be available during site creation.<br/>
+	NOTE: Network enabled plugins are not included on this list as they are already activated, though if you choose to randomize settings, it will randomize them as well.</em></p>
+
 	<table class="asc_option_table">
 		<tr>
 			<th>Avaiable Plugins</th>

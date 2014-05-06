@@ -315,7 +315,8 @@ if ( ! empty( $messages ) ) {
 
 	<h3>Plugins</h3>
 	<div>
-		<p>Select the plugins that will be automatically activated to the site.</p>
+		<p><em>Select the plugins you would like to be available during site creation.<br/>
+	NOTE: Network enabled plugins are not included on this list as they are already activated, though if you choose to randomize settings, it will randomize them as well.</em></p>
 		<table class="form-table">
 		<tbody>
 			<tr class="form-field form-required">

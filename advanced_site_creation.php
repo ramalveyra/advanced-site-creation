@@ -164,8 +164,8 @@ class Advance_Site_Creation_Manager
 	       array($this,'build_site_page')
   		);
 
-  		$this->getThemes();
-  		$this->getPlugins();
+  		$this->getThemes(array('fetchall'=>true));
+  		$this->getPlugins(array('fetchall'=>true));
   		$this->build_site = new Advanced_Site_Creation_Site_Builder;
   		$this->build_site->setThemeOptions($this->themes);
   		$this->build_site->setPluginOptions($this->allowedPlugins);
@@ -308,7 +308,9 @@ class Advance_Site_Creation_Manager
 				if(isset($this->network_settings['themesperpage'])){
 					$themes_per_page = $this->network_settings['themesperpage'];
 				}
-			}	
+			}else{
+				$themes_per_page = count($this->themes);
+			}
 		}
 
 		if(is_array($options)){
@@ -318,6 +320,12 @@ class Advance_Site_Creation_Manager
 			if(isset($options['search'])){
 				$search = $options['search'];
 			}
+			if(isset($options['fetchall'])){
+				if($options['fetchall']==true){
+					$themes_per_page = count($this->themes);		
+				}
+			}
+
 		}
 
 		//do search (search and pagination are patterned based on worpdress way for themes)
@@ -826,7 +834,10 @@ class Advance_Site_Creation_Manager
 				if(isset($this->network_settings['pluginsperpage'])){
 					$plugins_per_page = $this->network_settings['pluginsperpage'];
 				}
-			}	
+			}else{
+				$plugins_per_page = count($this->allowedPlugins);
+			}
+
 		}
 
 		if(is_array($options)){
@@ -835,6 +846,11 @@ class Advance_Site_Creation_Manager
 			}
 			if(isset($options['search'])){
 				$search = $options['search'];
+			}
+			if(isset($options['fetchall'])){
+				if($options['fetchall']==true){
+					$plugins_per_page = count($this->allowedPlugins);
+				}
 			}
 		}
 
@@ -901,8 +917,9 @@ class Advance_Site_Creation_Manager
 	 		//the site settings
 	 		$this->setUserSettings($blog_id);
 	 		
+
 	 		//redirect
-	 		$this->redirectToASC($blog_id);		
+	 		$this->redirectToASC($blog_id);
 	 	}
 	 }
 
@@ -912,7 +929,41 @@ class Advance_Site_Creation_Manager
 	 		switch_to_blog($blog_id);
 		 	foreach($this->whitelist_options as $option){
 		 		$set_option = isset($_POST[$option])? $_POST[$option] : '';
-		 		update_option($option,$_POST[$option]);
+		 		update_option($option,$set_option);
+		 	}
+
+		 	//the plugins settings
+		 	//check if randomize settings is enabled for the plugins
+		 	if($this->build_site->_user_settings['plugins']['is_rand']){
+		 		//now get the plugin mapping
+		 		if(isset($this->build_site->plugin_settings_map)){
+		 			$blog_plugins = get_option('active_plugins');
+					$site_plugins = array_keys(get_site_option('active_sitewide_plugins'));
+					$fetched_plugins = array_merge($blog_plugins, $site_plugins);
+		 			foreach ($fetched_plugins as $plugin) {
+					$plugin_id = substr($plugin,0,strpos($plugin, '/'))==''?$plugin:substr($plugin,0,strpos($plugin, '/'));
+					$user_plugin_settings = $this->build_site->plugin_settings_map->get_plugin_info($plugin_id);
+					if($user_plugin_settings!==null){
+						//var_dump($user_plugin_settings);
+						if(isset($user_plugin_settings['options'])){
+							foreach($user_plugin_settings['options'] as $option){
+								$option_name = $option['name'];
+								$option_values = array();
+								//build the randomize setting
+								if(isset($option['settings'])){
+									foreach($option['settings'] as $setting){
+										//var_dump(get_option($setting['id']))
+										$rand_keys = array_rand($setting['values'],1);
+										$option_values[$setting['id']]= $setting['values'][$rand_keys];
+									}
+								}
+								//set the option
+								update_option($option_name, $option_values);
+							}
+						}
+					}
+					}
+		 		}
 		 	}
 		 	restore_current_blog();
 	 	}
@@ -1100,6 +1151,7 @@ class Advance_Site_Creation_Manager
 	*/
   	public function advanced_site_creation_uninstall_plugin(){
   		delete_site_option('asc_network_settings');
+  		delete_site_option('asc_build_site_settings');
   	}
 
 	/** 

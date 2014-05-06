@@ -151,7 +151,7 @@ class Advanced_Site_Creation_Site_Builder
 
 	public function __construct(){
 		//check if there are saved values, if there's none load the default
-		$asc_settings = get_site_option('asc_network_settings');
+		$asc_settings = get_site_option('asc_build_site_settings');
 		if(isset($asc_settings['build_site_settings'])){
 			//set the settings to this
 			$this->_user_settings = $asc_settings['build_site_settings'];
@@ -160,8 +160,6 @@ class Advanced_Site_Creation_Site_Builder
 		//handle plugins
 		if(class_exists('L7_Plugin_Settings')){
 			$this->plugin_settings_map = new L7_Plugin_Settings;
-			//var_dump($this->plugin_settings_map->plugin_json_files);
-			//var_dump($this->plugin_settings_map->get_plugin_info('virtual-pages-with-templates'));
 		}
 	}
 
@@ -243,11 +241,11 @@ class Advanced_Site_Creation_Site_Builder
 		
 		//save the user settings
 		//get the current settings
-		$asc_settings = get_site_option('asc_network_settings');
+		$asc_settings = get_site_option('asc_build_site_settings');
 		//set the new settings
 		$asc_settings['build_site_settings'] = $this->_user_settings;
 		//update the options table
-		update_site_option( 'asc_network_settings', $asc_settings);
+		update_site_option( 'asc_build_site_settings', $asc_settings);
 		$this->notice = 'Site Option Settings Updated.';
 		add_action( 'network_admin_notices', array($this,'build_site_settings_page_admin_notice' ));
 	}
