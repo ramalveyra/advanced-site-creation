@@ -539,6 +539,7 @@ class Advance_Site_Creation_Manager
 		//assign values
 		$siteurl = $_POST['values']['domain'];
 		$blogname = $_POST['values']['title'];
+		$tagline = $_POST['values']['tagline'];
 
 		//validation
 		//check for template blog
@@ -552,10 +553,10 @@ class Advance_Site_Creation_Manager
 		}
 
 		//Get the description
-		switch_to_blog($template_id);
-	 	$blogdescription = get_bloginfo('description');
+		//switch_to_blog($template_id);
+	 	$blogdescription = $tagline;
 	 	//$template_upload_dir = wp_upload_dir();
-    	restore_current_blog();
+    	//restore_current_blog();
 
 		$site_array[0][0] = $siteurl;
 		$site_array[0][1] = $blogdescription;
@@ -813,7 +814,7 @@ class Advance_Site_Creation_Manager
 
 		//if user decided to overwrite settings
 		if(isset($_POST['values']['overwrite-clone-site-settings'])){
-			if($_POST['values']['overwrite-clone-site-settings']==TRUE){
+			if($_POST['values']['overwrite-clone-site-settings']=='true'){
 				parse_str($_POST['values']['user_settings'], $post_val);
 				$this->overwriteClonedSiteSettings($new_blog_id, $post_val);
 			}

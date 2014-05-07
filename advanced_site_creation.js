@@ -218,6 +218,7 @@
                 var values = {}
                 values['domain'] = $('input[name=blog\\[domain\\]]').val();
                 values['title'] = $('input[name=blog\\[title\\]]').val();
+                values['tagline'] = $('input[name=blog\\[tagline\\]]').val();
                 values['domain_name'] = $('input[name=blog\\[domain_name\\]]').val();
                 values['site_template'] = $('#clone-site-template').val();
                 values['site_user'] = $('#clone-site-user').val();
