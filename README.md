@@ -68,7 +68,28 @@ Avaliable Settings:
 - Plugin Selection
  - Select "Default" to view list of available plugins with description. You search the plugin by using the search box.
     - You can limit the number of Plugins per page by supplying the limits on "Plugins per page" option. This will be ignored if "multi-value" is selected instead.
- - Selecting "Multi value" will show the list of plugins inside a multi value select box. 
+ - Selecting "Multi value" will show the list of plugins inside a multi value select box.
+
+### Version 1.2
+
+New feature has been added to enable to easily build a site.
+
+Main Features include:
+* Configure more site settings during site creation
+* Enable setting random values for settings
+* Ability to create a site from template site (Clone a site)
+* Ability to overwrite settings of a cloned site
+* Ability to randomize plugin settings
+ - Plugin mapping required (see: )
+
+#### Build Site Usage
+Two menus have been added:
+Under Sites > Build Site (Advanced) and Settings > Build Site Settings.
+
+Build Site Settings is where you can configure the values you want to be available for building a site e.g. filter the templates that you want to be available during site creation.
+
+The Build Site page contains the feature to build a site from scratch or clone an existing site.
+
 
 ##Contributors
 [@ramalveyra](https://github.com/ramalveyra)
