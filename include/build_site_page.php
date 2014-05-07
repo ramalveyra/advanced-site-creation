@@ -25,7 +25,7 @@
 	}
 </style>
 <div class="wrap">
-<h2><?php echo __('Advanced Site Creation: Build Site');?></h2>
+<h2 id="add-new-site"><?php echo __('Advanced Site Creation: Build Site');?></h2>
 
 <?php if ( isset($_GET['update']) ) {
 		$messages = array();
@@ -45,7 +45,7 @@ if ( ! empty( $messages ) ) {
 
 <a href="<?php echo network_admin_url('sites.php?page=asc_build_site&rand=true');?>" class="button-secondary">Randomize Settings</a>
 <br/><br/>
-<form method="post" action="<?php echo network_admin_url('site-new.php?action=add-site&build_site=true')?>">
+<form method="post" action="<?php echo network_admin_url('site-new.php?action=add-site&build_site=true')?>" id="build-site-frm">
 <?php wp_nonce_field( 'add-blog', '_wpnonce_add-blog' ) ?>
 <div id="asc_site_settings">
 	<h3>General Settings</h3>
@@ -55,8 +55,14 @@ if ( ! empty( $messages ) ) {
 			<tr>
 				<th>Site Address</th>
 				<td>
-				<input name="blog[domain]" type="text" class="regular-text" title="Domain">
-				<p>Only lowercase letters (a-z) and numbers are allowed.</p>			</td>
+				<?php if ( is_subdomain_install() ) { ?>
+				<input name="blog[domain]" type="text" class="regular-text" title="<?php esc_attr_e( 'Domain' ) ?>"/><span class="no-break">.<?php echo preg_replace( '|^www\.|', '', $current_site->domain ); ?></span>
+				<?php } else {
+					echo $current_site->domain . $current_site->path ?><input name="blog[domain]" class="regular-text" type="text" title="<?php esc_attr_e( 'Domain' ) ?>"/>
+				<?php }
+				echo '<p>' . __( 'Only lowercase letters (a-z) and numbers are allowed.' ) . '</p>';
+				?>
+				</td>
 			</tr>
 			<tr>
 				<th scope="row">Site Title</th>
@@ -352,13 +358,15 @@ if ( ! empty( $messages ) ) {
 			<tr valign="top">
 				<th scope="row"><?php echo __('Default site widgets')?></th>
 				<td>
-					<label><input name="blog[remove_default_widgets]" type="checkbox" id="blog[remove_default_widgets]"> <?php echo __('Remove Default Widgets added to the new site')?>.</label>
+					<label><input name="blog[remove_default_widgets]" type="checkbox" id="blog[remove_default_widgets]"> <?php echo __('Remove Default Widgets added to the new site')?>. <br>
+					<p><em>* Some themes will ingore this.</em></p>
+					</label>
 				</td>
 			</tr>
 			<tr valign="top">
 				<th scope="row"><?php echo __('New Site Notifications')?></th>
 				<td>
-					<label><input name="blog[remove_new_site_notif]" type="checkbox" id="blog[remove_new_site_notif]"> <?php echo __('Don\'t send email notifications after new site has been created.')?>.</label>
+					<label><input name="blog[remove_new_site_notif]" type="checkbox" id="blog[remove_new_site_notif]"> <?php echo __('Don\'t send email notifications after new site has been created.')?></label>
 				</td>
 			</tr>
 		</tbody>
@@ -370,16 +378,17 @@ if ( ! empty( $messages ) ) {
 </div>
 <br />
 <h3>Build Site from Template</h3>
+<?php wp_nonce_field( 'clone-site', '_wpnonce_clone-site' ) ?>
 <table>
 	<tbody>
 		<tr valign="top">
 			<td>
-				<label><input name="create-site-from-template" type="checkbox" id="create-site-from-template"> Copy templates, plugins and settings from a site.</label>
+				<label><input name="create-site-from-template" type="checkbox" id="create-site-from-template"> Copy the template site including applied theme, plugins and settings.</label>
 			</td>
 		</tr>
 		<tr valign="top">
 			<td>
-				<label><input name="overwrite-clone-site-settings" type="checkbox" id="overwrite-clone-site-settings"> Overwrite cloned site settings. Copy templates, plugins and settings from a site but use the above settings instead.</label>
+				<label><input name="overwrite-clone-site-settings" type="checkbox" id="overwrite-clone-site-settings"> Overwrite cloned site settings. Copy the template site but settings like theme, plugins etc. will be overwritten by the supplied values above. Plugins added on the selection above will be activated if they were not activated on the template site.</label>
 			</td>
 		</tr>
 	</tbody>
@@ -390,7 +399,17 @@ if ( ! empty( $messages ) ) {
 				<th scope="row">Site template</th>
 				<td>
 					<select id="clone-site-template">
-						<option value="">site-template.local.wordpress.dev</option>
+						<?php // loop through blogs and echo them
+						if ($subdomain_install) {
+							foreach ($the_blogs as $a_blog) {
+								echo "<option value=\"$a_blog->blog_id\">$a_blog->domain</option>";
+							}
+						} else { 
+							foreach ($the_blogs as $a_blog) {
+								echo "<option value=\"$a_blog->blog_id\">$a_blog->path</option>";
+							}
+						}
+						?>
 					</select> 
 				</td>
 			</tr>
@@ -398,37 +417,24 @@ if ( ! empty( $messages ) ) {
 				<th scope="row">Site User</th>
 				<td>
 					<select id="clone-site-user">
-					<option value="1">admin</option>
+					<?php // loop through users and echo them
+						foreach ($the_users as $a_user) {
+							echo "<option value=\"$a_user->ID\">$a_user->user_login</option>";
+						}
+					?>
 					</select> 
 				</td>
 			</tr>
 </table>
 <p><em>* For <strong>Plugins</strong>, unchecking the above clone options will activate plugins selected on the settings group.</em></p>
-<input type="hidden" name="has_user_settings" value="true" />
-<input type="submit" name="submit" class="button-primary" value="Build New Site" /> 
+<table>
+	<tr class="form-field">
+		<td colspan="2">
+			<pre id="clone-log"></pre>
+		</td>
+	</tr>
+</table>
+<input type="hidden" name="has_user_settings" id="has_user_settings" value="true" />
+<input type="submit" name="submit" class="button-primary" value="Build New Site" id="build-site" /> 
+<div class="preloader" style="display:none;"><img src="<?php echo ASC_PLUGIN_URL?>include/ajax-loader.gif" /></div>
 </form>
-<script type="text/javascript">
-//<![CDATA[
-jQuery(document).ready(function() {
-	jQuery('.permalink-structure input:radio').change(function() {
-		if ( 'custom' == this.value )
-			return;
-		jQuery('#permalink_structure').val( this.value );
-	});
-	jQuery('#permalink_structure').focus(function() {
-		jQuery("#custom_selection").attr('checked', 'checked');
-	});
-});
-//]]>
-</script>
-<script>
-	(function($) {
-	    $(document).ready(function() {
-	    	$('#asc_site_settings').accordion({
-	    		collapsible: true,
-	    		heightStyle: "content"
-	    	});
-	    	$('#theme-id-multi, #plugins-multiselect').select2({width: '100%'});
-	    });
-	})(jQuery);
-</script>

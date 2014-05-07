@@ -190,6 +190,29 @@ if ( ! empty( $messages ) ) {
 			</tr>
 		</tbody>
 	</table>
+
+	<table class="form-table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('Default site widgets')?></th>
+				<td>
+					<label><input name="blog[remove_default_widgets]" type="checkbox" id="blog[remove_default_widgets]"> <?php echo __('Remove Default Widgets added to the new site')?>.
+					<br/><p><em>* Some themes will ingore this.</em></p></label>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<table class="form-table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('New Site Notifications')?></th>
+				<td>
+					<label><input name="blog[remove_new_site_notif]" type="checkbox" id="blog[remove_new_site_notif]"> <?php echo __('Don\'t send email notifications after new site has been created.')?></label>
+				</td>
+			</tr>
+		</tbody>
+	</table>
 	</div><!-- end site creation option -->
 	<div class="preloader" style="display:none;"><img src="<?php echo ASC_PLUGIN_URL?>include/ajax-loader.gif" /></div>
 	<?php submit_button( __('Add Site'), 'primary', 'add-site' ); ?>

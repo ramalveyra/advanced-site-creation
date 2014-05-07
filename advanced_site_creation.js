@@ -193,7 +193,7 @@
                 $('#clone-site-options').hide();
                 $('#default-site-options').show();
                 $('.default-site-creation').show();
-                $('#add-site-advanced-frm').attr('action',window.location.host + '/wp-admin/network/site-new.php?action=add-site&advanced=true');
+                $('#add-site-advanced-frm').attr('action','http://' + window.location.host + '/wp-admin/network/site-new.php?action=add-site&advanced=true');
             }else{
                 $('#clone-site-options').show();
                 $('#default-site-options').hide();
@@ -240,6 +240,13 @@
                             $('#clone-log').html($('#clone-log').html()+response.message);
                             $(self).show();
                             $('.preloader').hide();
+                            //add notice
+                            var notice = $('<div id="message" class="updated"><p>'+response.notice+'</p></div>');
+                            if($('#message').length){
+                                $('#message').html('<p>'+response.notice+'</p>');
+                            }else{
+                                notice.insertAfter($('#add-new-site'));
+                            }
                         }else{
                             $('#clone-log').html($('#clone-log').html()+response.message);
                             $(self).show();

@@ -163,12 +163,6 @@ class Advance_Site_Creation_Manager
 	       'asc_build_site',
 	       array($this,'build_site_page')
   		);
-
-  		$this->getThemes(array('fetchall'=>true));
-  		$this->getPlugins(array('fetchall'=>true));
-  		$this->build_site = new Advanced_Site_Creation_Site_Builder;
-  		$this->build_site->setThemeOptions($this->themes);
-  		$this->build_site->setPluginOptions($this->allowedPlugins);
 	}
 
 	/**
@@ -183,6 +177,13 @@ class Advance_Site_Creation_Manager
         wp_enqueue_script( 'jquery-ui-1.10.4.custom.min.js' );
         wp_enqueue_style( 'flick.css', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/css/flick/jquery-ui-1.10.4.custom.min.css' );
 
+        //init items
+        $this->getThemes(array('fetchall'=>true));
+  		$this->getPlugins(array('fetchall'=>true));
+  		$this->build_site = new Advanced_Site_Creation_Site_Builder;
+  		$this->build_site->setThemeOptions($this->themes);
+  		$this->build_site->setPluginOptions($this->allowedPlugins);
+
         //build the settings form
 	 	include_once('include/build_site_settings_page.php');
 	}
@@ -191,6 +192,11 @@ class Advance_Site_Creation_Manager
 	 * The Build Site Page
 	 */
 	public function build_site_page(){
+		global $current_site;
+		wp_register_script( 'build_site.js', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'build_site.js');
+        wp_enqueue_script( 'build_site.js' );
+        wp_localize_script( 'build_site.js', 'build_site_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ))); 
+
 		wp_register_script( 'select2.js', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'lib' . DIRECTORY_SEPARATOR . 'select2-3.4.5' . DIRECTORY_SEPARATOR .'select2.js');
         wp_enqueue_script( 'select2.js' );
         wp_enqueue_style( 'select2.css', ASC_PLUGIN_URL .DIRECTORY_SEPARATOR. 'lib' . DIRECTORY_SEPARATOR . 'select2-3.4.5' . DIRECTORY_SEPARATOR .'select2.css' );
@@ -198,6 +204,13 @@ class Advance_Site_Creation_Manager
         wp_register_script( 'jquery-ui-1.10.4.custom.min.js', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/js/jquery-ui-1.10.4.custom.min.js' );
         wp_enqueue_script( 'jquery-ui-1.10.4.custom.min.js' );
         wp_enqueue_style( 'flick.css', ASC_PLUGIN_URL . '/lib/jquery/jquery-ui-1.10.4.custom/css/flick/jquery-ui-1.10.4.custom.min.css' );
+
+        //init items
+        $this->getThemes(array('fetchall'=>true));
+  		$this->getPlugins(array('fetchall'=>true));
+  		$this->build_site = new Advanced_Site_Creation_Site_Builder;
+  		$this->build_site->setThemeOptions($this->themes);
+  		$this->build_site->setPluginOptions($this->allowedPlugins);
 
         //prepare the values
         //check for randomized is clicked
@@ -209,12 +222,39 @@ class Advance_Site_Creation_Manager
         }
         $this->build_site->setSiteSettings($rand);
 
-        //build site form
+        global $wpdb;
+
+		
+        if ( is_multisite() ) { $subdomain_install = is_subdomain_install(); }
+
+		// fetch existing blogs
+		//$the_blogs = get_blog_list( 1, 'all' ); could this also work? ->later
+		$tbl_blogs = $wpdb->prefix ."blogs";
+		$the_blogs = $wpdb->get_results( "SELECT blog_id, domain, path FROM $tbl_blogs WHERE blog_id <> '1'" );
+
+		if (!$subdomain_install) {
+			// trim each value in the array from slashes (subdirs)
+			function removeslash(&$value) { $value = str_replace("/", "", $value); } 
+			for ( $i = 0; $i < sizeof( $the_blogs ); $i++ ) {
+				array_walk($the_blogs[$i], 'removeslash');
+			}
+		}
+
+		// fetch existing users
+		$tbl_users = $wpdb->prefix ."users";
+		$the_users = $wpdb->get_results( "SELECT ID, user_login FROM $tbl_users" );
+
+		//// check for errors
+		//if(!$the_blogs) { $error['blogs'] = "there are no templates to choose from"; }
+		//if(!$the_users) { $error['users'] = "there are no users, which is impossible.."; }
+
+		//build site form
 	 	include_once('include/build_site_page.php');
 	}
 
 	public function build_site_settings_page_post(){
 		if(isset($_POST['build_site_settings_page_POST']) && $_POST['build_site_settings_page_POST']=='Y'){
+			$this->build_site = new Advanced_Site_Creation_Site_Builder;
 			$this->build_site->saveUserSettings($_POST);
 		}
 	}
@@ -439,7 +479,7 @@ class Advance_Site_Creation_Manager
 	 * this function is mostly taken from Add Cloned Sites for WPMU (batch)
 	 * @credits Frits Jan van Kempen
 	 */
-	public function clone_site_ajax(){
+	public function clone_site_ajax(){ 
 		//security
 		if ( !wp_verify_nonce( $_REQUEST['nonce'], "clone-site")) {
       		exit('error');
@@ -465,7 +505,9 @@ class Advance_Site_Creation_Manager
 		// Get POST data
 		$template_id = $_POST['values']['site_template'];
 		$user_id = $_POST['values']['site_user'];
-		$include_uploads = $_POST['values']['include_uploads'];
+		//$include_uploads = $_POST['values']['include_uploads'];
+		//default to TRUE
+		$include_uploads = TRUE;
 
 		//check for domain name
 		if(empty($_POST['values']['domain_name'])){
@@ -670,7 +712,7 @@ class Advance_Site_Creation_Manager
 		update_blog_option ($new_blog_id, 'admin_email', $admin_email);
 		update_blog_option ($new_blog_id, 'home', $full_url);
 		update_blog_option ($new_blog_id, 'fileupload_url', $fileupload_url);
-		update_blog_option ($new_blog_id, 'upload_path', 'wp-content/blogs.dir/' . $new_blog_id . '/files');
+		//update_blog_option ($new_blog_id, 'upload_path', 'wp-content/blogs.dir/' . $new_blog_id . '/files');
 		$new_options_table = $wpdb->prefix . $new_blog_id . '_options';
 		$old_name = $wpdb->prefix . $template_id . '_user_roles';
 		$new_name = $wpdb->prefix . $new_blog_id . '_user_roles';
@@ -714,49 +756,27 @@ class Advance_Site_Creation_Manager
 			}
 		}
 
-		// Disabling this function as it is not compatible for MU
-		// Copy images and uploads
-		// SPECIAL NOTE: This part of the code (copy files) I got from the plugin:
-		// "new blog templates" by Jason DeVelvis and Ulrich Sossou
-		// Special thanks go to you guys!
+		//Fix for missing images
+		//Fix copied from NS Cloner - Site Copier (http://neversettle.it)
 		if($include_uploads) {
-			/*global $wp_filesystem;
+			// COPY ALL MEDIA FILES
+			// get the right paths to use
+			// handle for uploads location when cloning root site
+			$src_blogs_dir = $this->get_upload_folder($template_id);
 
-			$dir_to_copy = ABSPATH . 'wp-content/blogs.dir/' . $template_id . '/files';
-			$dir_to_copy_into = ABSPATH .'wp-content/blogs.dir/' . $new_blog_id . '/files';
+			//assuming we are not referencing the default blog
+			$dst_blogs_dir = $this->get_upload_folder($new_blog_id);
 
-			//$dir_to_copy = $template_upload_dir['basedir'];
-			//change end ID to new template id
-			//$dir_to_copy_into = str_replace('sites/'.$template_id,'sites/'.$new_blog_id,$dir_to_copy);
-
-			if ( is_dir( $dir_to_copy ) ) {
-
-				if ( wp_mkdir_p( $dir_to_copy_into ) ) {
-
-					require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php' );
-					require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php' );
-
-					if( isset( $wp_filesystem ) )
-						$orig_filesystem = wp_clone( $wp_filesystem );
-					$wp_filesystem = new WP_Filesystem_Direct( false );
-
-					if ( ! defined('FS_CHMOD_DIR') )
-						define('FS_CHMOD_DIR', 0755 );
-					if ( ! defined('FS_CHMOD_FILE') )
-						define('FS_CHMOD_FILE', 0644 );
-
-					copy_dir( $dir_to_copy, $dir_to_copy_into );
-
-					unset( $wp_filesystem );
-					if( isset( $orig_filesystem ) )
-						$wp_filesystem = wp_clone( $orig_filesystem );
-
-					if ( @file_exists( $dir_to_copy_into . '/sitemap.xml' ) )
-						@unlink( $dir_to_copy_into . '/sitemap.xml' );
-
-					$message.= "Copying files from $dir_to_copy to $dir_to_copy_into." . PHP_EOL;
-
-				} else {
+			//fix for paths on windows systems
+				if (strpos($src_blogs_dir,'/') !== false && strpos($src_blogs_dir,'\\') !== false ) {
+					$src_blogs_dir = str_replace('/', '\\', $src_blogs_dir);
+					$dst_blogs_dir = str_replace('/', '\\', $dst_blogs_dir);
+				}
+				if (is_dir($src_blogs_dir)) {
+					$num_files = $this->recursive_file_copy($src_blogs_dir, $dst_blogs_dir, 0);
+					$message.= 'Copied: ' . $num_files . ' folders and files!'. PHP_EOL;
+				}
+				else {
 					$response['message'] = 'Unable to clone site.'.PHP_EOL;
 					$response['message'].= 'An error occured while copying uploads.';
 					$response['success'] = false;
@@ -764,7 +784,8 @@ class Advance_Site_Creation_Manager
 					echo json_encode($response);
 			   		die();
 				}
-			}*/
+
+			
 		}
 
 		//reset permalink structure
@@ -786,12 +807,72 @@ class Advance_Site_Creation_Manager
 		$message.= "Done cloning site." . PHP_EOL;
 		$message.= "Time elapsed: $time seconds" . PHP_EOL;
 
-		
 		$response['message'] = $message;
+
+		$response['new_blog_id'] = $new_blog_id;
+
+		//if user decided to overwrite settings
+		if(isset($_POST['values']['overwrite-clone-site-settings'])){
+			if($_POST['values']['overwrite-clone-site-settings']==TRUE){
+				parse_str($_POST['values']['user_settings'], $post_val);
+				$this->overwriteClonedSiteSettings($new_blog_id, $post_val);
+			}
+		}
+
+		$response['notice'] = sprintf( __( 'Site added. <a href="%1$s">Visit Dashboard</a> or <a href="%2$s">Edit Site</a>' ), esc_url( get_admin_url( absint( $new_blog_id ) ) ), network_admin_url( 'site-info.php?id=' . absint( $new_blog_id ) ) );
 
 		header('Content-Type: application/json');
 		echo json_encode($response);
    		die();
+	}
+	/**
+	 * Get the uploads folder for the target site
+	 */
+	function get_upload_folder($id) {
+		switch_to_blog($id);
+		$src_upload_dir = wp_upload_dir(); 
+		restore_current_blog();
+		// trim '/files' off the end of loction for sites < 3.5 with old blogs.dir format
+		$folder = str_replace('/files', '', $src_upload_dir['basedir']); 
+		$content_dir = '';
+		// validate the folder itself to handle cases where htaccess or themes alter wp_upload_dir() output
+		if ( $id!=1 && (strpos($folder, '/'.$id) === false || !file_exists($folder)) ) {
+			// we have a non-standard folder and the copy will probably not work unless we correct it	
+			// get the installation dir - we're using the internal WP constant which the codex says not to do
+			// but at this point the wp_upload_dir() has failed and this is a last resort
+			$content_dir = WP_CONTENT_DIR; //no trailing slash
+			// check for WP < 3.5 location
+			$test_dir = $content_dir . '/blogs.dir/' . $id;
+			if (file_exists($test_dir)) {
+				
+				return $test_dir;
+			}
+			// check for WP >= 3.5 location
+			$test_dir = $content_dir . '/uploads/sites/' . $id;
+			if (file_exists($test_dir)) {
+				
+				return $test_dir;
+			}
+		}
+		// otherwise we have a standard folder OR could not find a normal folder and are stuck with 
+		// sending the original wp_upload_dir() back knowing the replace and copy should work
+		return $folder;
+	}
+	/**
+	 * Copy files and directories recursively and return number of copies executed
+	 */
+	function recursive_file_copy($src, $dst, $num) {
+		$num = $num + 1;
+		if (is_dir($src)) {
+			if (!file_exists($dst)) {
+				mkdir($dst);
+			}
+			$files = scandir($src);
+			foreach ($files as $file)
+				if ($file != "." && $file != ".." && $file != 'sites') $num = $this->recursive_file_copy("$src/$file", "$dst/$file", $num); 
+		}
+		else if (file_exists($src)) copy($src, $dst);
+		return $num;
 	}
 
 	/**
@@ -839,7 +920,6 @@ class Advance_Site_Creation_Manager
 			}
 
 		}
-
 		if(is_array($options)){
 			if(isset($options['page'])){
 				$page = $options['page'];
@@ -969,30 +1049,38 @@ class Advance_Site_Creation_Manager
 	 	}
 	 }
 
-	 public function removeNewSiteNotif(){
-	 	if (!empty($_POST['blog']['remove_new_site_notif']) && $_POST['blog']['remove_new_site_notif']=='on') {
-	 		add_filter( 'wpmu_welcome_notification', array($this,'db_remove_new_site_notification_email' ));	
-	 	}
-	 }
-	 /**
-	  * Overwriting new site notification mail
-	  */ 
-	 function db_remove_new_site_notification_email( $blog_id, $user_id, $password, $title, $meta ) {
-		return false;
-	 }
-	 /**
-	  *
-	  */
-	 public function removeDefaultWidgets($blog_id){
-	 	if (!empty($_POST['blog']['remove_default_widgets']) && $_POST['blog']['remove_default_widgets']=='on') {
-	 		switch_to_blog($blog_id);
-	 		update_option('sidebars_widgets','');
-	 		restore_current_blog();
-	 	}		
-	 }
-	 public function remove_default_widgets() {
-		unregister_widget('WP_Widget_Search');
-	 }
+	public function removeNewSiteNotif(){
+		if (!empty($_POST['blog']['remove_new_site_notif']) && $_POST['blog']['remove_new_site_notif']=='on') {
+			add_filter( 'wpmu_welcome_notification', array($this,'db_remove_new_site_notification_email' ));	
+		}
+	}
+	
+	/**
+	* Overwriting new site notification mail
+	*/ 
+	public function db_remove_new_site_notification_email( $blog_id, $user_id, $password, $title, $meta ) {
+	return false;
+	}
+	
+	public function removeDefaultWidgets($blog_id){
+		if (!empty($_POST['blog']['remove_default_widgets']) && $_POST['blog']['remove_default_widgets']=='on') {
+			switch_to_blog($blog_id);
+			//$widgets_no_values = array('wp_inactive_widgets'=>array(),'sidebar-1'=>array(),'sidebar-2'=>array(),'sidebar-3'=>array(),'array_version'=>3);
+			//update_option('sidebars_widgets', $widgets_no_values);
+			$sidebar_widgets = get_option('sidebars_widgets');
+			if(is_array($sidebar_widgets)){
+				foreach($sidebar_widgets as $key=>$val){
+					if(is_array($val)){
+						//overwrite with empty array
+						$sidebar_widgets[$key]=array();
+					}
+				}
+			}
+			update_option('sidebars_widgets', $sidebar_widgets);
+			restore_current_blog();
+		}		
+	}
+	 
 
 	 public function setGeneralSettings($blog_id){
 	 	//Blog description
@@ -1057,6 +1145,57 @@ class Advance_Site_Creation_Manager
 	        
 	    }
 	 }
+
+	public function overwriteClonedSiteSettings($blog_id, $post_val){
+		$_POST = $post_val;
+		//init items
+        $this->getThemes(array('fetchall'=>true));
+  		$this->getPlugins(array('fetchall'=>true));
+  		$this->build_site = new Advanced_Site_Creation_Site_Builder;
+  		$this->build_site->setThemeOptions($this->themes);
+  		$this->build_site->setPluginOptions($this->allowedPlugins);
+
+		if(current_user_can('manage_options')){
+			//TODO: Option to allow/disallow overwrites
+			//overwrite tagline
+			$this->setGeneralSettings($blog_id);
+
+			//TODO: overwrite user
+			/*$user_name = $_POST['blog']['domain'];
+			$user_id = username_exists( $user_name );
+			if ( !$user_id and email_exists($user_email) == false ) {
+			    $random_password = wp_generate_password( $length=12, $include_standard_special_chars=false );
+			    $user_id = wp_create_user( $user_name, $random_password, $user_email );
+			} else {
+			    $random_password = __('User already exists.  Password inherited.');
+			}*/
+
+			//TODO: check if automatically set domain mapping
+	 		//$this->setDomainMap($blog_id);
+
+	 		//overwrite the theme
+			$this->setTheme($blog_id);
+
+			//activate newly selected plugins
+	 		$this->setPlugins($blog_id);
+
+	 		//set the custom settings
+	 		$this->setCustomSettings($blog_id);
+
+	 		//remove default post/page
+	 		$this->removeCustomPostPage($blog_id);
+
+	 		//remove default widgets
+	 		$this->removeDefaultWidgets($blog_id);
+
+	 		//remove emailer when new sites are created
+	 		$this->removeNewSiteNotif();
+
+	 		//the site settings
+	 		$this->setUserSettings($blog_id);
+	 		
+		}
+	}
 
 	 /**
 	 * Automatically sets a domain mapping to the new created site
