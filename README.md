@@ -80,7 +80,7 @@ Main Features include:
 * Ability to create a site from template site (Clone a site)
 * Ability to overwrite settings of a cloned site
 * Ability to randomize plugin settings
- - Plugin mapping required (see: )
+ - Plugin Settings Mapping wordpress plugin required (see: https://github.com/ramalveyra/plugin-settings-mapping)
 
 #### Build Site Usage
 Two menus have been added:
