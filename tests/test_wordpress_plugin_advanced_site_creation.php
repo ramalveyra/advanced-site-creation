@@ -356,7 +356,7 @@ class WP_Test_WordPress_Plugin_Advanced_Site_Creation extends WP_UnitTestCase {
 		$this->asc->network_settings['themesperpage'] = 1;
 
 		//get wordpress themes
-		$wp_themes =  wp_get_themes();
+		$wp_themes =  wp_get_themes(array('allowed'=>'network'));
 		//select a theme to search
 		$theme_search_query = 'twentythirteen';
 
