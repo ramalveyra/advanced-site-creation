@@ -973,7 +973,10 @@ class Advance_Site_Creation_Manager
 	 	if(current_user_can('manage_options')){
 	 		//init items
         	$this->getThemes(array('fetchall'=>true));
-  			$this->getPlugins(array('fetchall'=>true));
+	  		$this->getPlugins(array('fetchall'=>true));
+	  		$this->build_site = new Advanced_Site_Creation_Site_Builder;
+	  		$this->build_site->setThemeOptions($this->themes);
+	  		$this->build_site->setPluginOptions($this->allowedPlugins);
 
   			//change some general settings
 	 		$this->setGeneralSettings($blog_id);
