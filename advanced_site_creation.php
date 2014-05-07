@@ -970,7 +970,11 @@ class Advance_Site_Creation_Manager
 	public function advanced_site_configs($blog_id){
 	 	// Make sure the user can perform this action and the request came from the correct page.
 	 	if(current_user_can('manage_options')){
-	 		//change some general settings
+	 		//init items
+        	$this->getThemes(array('fetchall'=>true));
+  			$this->getPlugins(array('fetchall'=>true));
+
+  			//change some general settings
 	 		$this->setGeneralSettings($blog_id);
 
 	 		//automatically set domain mapping
