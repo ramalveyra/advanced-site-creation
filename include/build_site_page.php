@@ -304,8 +304,12 @@ if ( ! empty( $messages ) ) {
 					<select title="Theme" name="theme-id" id="theme-id-multi" style="width:50%">
 						<?php if(!empty($this->build_site->_user_settings['themes']['values'])):?>
 							<?php foreach($this->build_site->_default_settings['themes']['values'] as $theme):?>
-								<?php if(array_search($theme['value'],($this->build_site->_user_settings['themes']['values']))!==false):?>
-									<option value="<?php echo $theme['value']?>" <?php selected($theme['value'],$themes)?>><?php echo $theme['text']?></option>
+								<?php if($this->build_site->is_build_setting_configured == TRUE):?>
+									<?php if(array_search($theme['value'],($this->build_site->_user_settings['themes']['values']))!==false):?>
+										<option value="<?php echo $theme['value']?>" <?php selected($theme['value'],$themes)?>><?php echo $theme['text']?></option>
+									<?php endif;?>
+								<?php else:?>
+										<option value="<?php echo $theme['value']?>" <?php selected($theme['value'],$themes)?>><?php echo $theme['text']?></option>
 								<?php endif;?>
 							<?php endforeach;?>
 						<?php endif;?>
@@ -330,9 +334,13 @@ if ( ! empty( $messages ) ) {
 				<td>
 					<select multiple title="plugins" name="blog[checked-plugins][]" id="plugins-multiselect" style="width:100%">
 						<?php foreach($this->build_site->_default_settings['plugins']['values'] as $plugin):?>
-							<?php if(array_search($plugin['value'],($this->build_site->_user_settings['plugins']['values']))!==false):?>
+							<?php if($this->build_site->is_build_setting_configured == TRUE):?>
+								<?php if(array_search($plugin['value'],($this->build_site->_user_settings['plugins']['values']))!==false):?>
+									<option value="<?php echo $plugin['value']?>" selected><?php echo $plugin['text']?></option>
+								<?php endif;?>
+							<?php else:?>
 								<option value="<?php echo $plugin['value']?>" selected><?php echo $plugin['text']?></option>
-							<?php endif;?>
+							<?php endif;?>	
 						<?php endforeach;?>
 					</select>
 				</td>

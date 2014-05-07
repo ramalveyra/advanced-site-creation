@@ -20,14 +20,14 @@ class Advanced_Site_Creation_Site_Builder
 			'is_rand' => FALSE
 		),*/
 		'posts_per_page' => array(
-			'min' => 10,
+			'min' => 1,
 			'max' => 10,
 			'is_included' => TRUE, 
 			'is_rand' => TRUE,
 			
 		),
 		'posts_per_rss' => array(
-			'min' => 10,
+			'min' => 1,
 			'max' => 10,
 			'is_included' => TRUE, 
 			'is_rand' => TRUE,
@@ -149,12 +149,16 @@ class Advanced_Site_Creation_Site_Builder
 
 	public $site_settings;
 
+	public $is_build_setting_configured = FALSE;
+
 	public function __construct(){
 		//check if there are saved values, if there's none load the default
 		$asc_settings = get_site_option('asc_build_site_settings');
+
 		if(isset($asc_settings['build_site_settings'])){
 			//set the settings to this
 			$this->_user_settings = $asc_settings['build_site_settings'];
+			$this->is_build_setting_configured = TRUE;
 		}
 
 		//handle plugins
@@ -340,8 +344,6 @@ class Advanced_Site_Creation_Site_Builder
 		}
 		//for permalinks, select between pre-defined structure or custom structure
 		$this->site_settings['permalink_structure'] = (rand(0,1)==0)?$this->site_settings['permalink_structure'] : $this->site_settings['permalink_structure_custom'];
-		
-		//var_dump($this->_user_settings['plugins']);
 	}
 
 	public function getSiteSetting($key){
