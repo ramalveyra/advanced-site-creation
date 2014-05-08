@@ -30,7 +30,7 @@ if ( ! empty( $messages ) ) {
 			<th scope="row"><?php _e( 'Site Title' ) ?></th>
 			<td><input name="blog[title]" type="text" class="regular-text" title="<?php esc_attr_e( 'Title' ) ?>"/></td>
 		</tr>
-		<tr class="form-field form-required default-site-creation" style="display:none;">
+		<tr class="form-field form-required default-site-creation">
 			<th scope="row"><?php _e( 'Admin Email' ) ?></th>
 			<td><input name="blog[email]" type="text" class="regular-text" title="<?php esc_attr_e( 'Email' ) ?>"/></td>
 		</tr>
@@ -50,65 +50,7 @@ if ( ! empty( $messages ) ) {
 	</table>
 	<h3 style="width:100%"><?php _e('Customize Site')?></h3>
 
-	<table class="form-table">
-		<tbody>
-			<tr valign="top">
-				<th scope="row"><?php _e('Clone site')?></th>
-				<td>
-					<label><input name="create-site-from-template" type="checkbox" id="create-site-from-template" checked="checked"> <?php echo __('Copy templates, plugins and settings from a site. Uncheck this if you want to use the default settings.')?>.</label>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-
-	<div id="clone-site-options">
-	<?php wp_nonce_field( 'clone-site', '_wpnonce_clone-site' ) ?>
-	<table class="form-table">
-		<tbody>
-			<tr class="form-field form-required">
-				<th scope="row"><?php _e('Site template');?></th>
-				<td>
-					<select id="clone-site-template" style="width: 50%;">
-						<?php // loop through blogs and echo them
-						if ($subdomain_install) {
-							foreach ($the_blogs as $a_blog) {
-								echo "<option value=\"$a_blog->blog_id\">$a_blog->domain</option>";
-							}
-						} else { 
-							foreach ($the_blogs as $a_blog) {
-								echo "<option value=\"$a_blog->blog_id\">$a_blog->path</option>";
-							}
-						}
-						?>
-					</select> <br> <em><?php echo __('Select site as template. New site will have the same theme, plugins and settings of this source site.')?></em></p></td>
-			</tr>
-			<tr class="form-field form-required">
-				<th scope="row"><?php _e('Site User');?></th>
-				<td>
-					<select id="clone-site-user" style="width: 50%;">
-						<?php // loop through users and echo them
-						foreach ($the_users as $a_user) {
-							echo "<option value=\"$a_user->ID\">$a_user->user_login</option>";
-						}
-						?>
-					</select> <br> <em><?php echo __('Select the user who will become the admin for the new site.')?></em></p></td>
-			</tr>
-			<!--<tr>
-				<th scope="row"><?php _e('Include images and uploads')?></th>
-				<td>
-					<label><input name="clone-site-uploads-import" type="checkbox" id="clone-site-uploads-import"> <?php echo __('Include site images and uploads. Disable this if you have setup a different method for uploads.')?></label>
-				</td>	
-			</tr>-->
-			<tr class="form-field">
-				<td colspan="2">
-					<pre id="clone-log"></pre>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-	</div>
-
-	<div id="default-site-options" style="display: none;"> <!-- site creation option-->
+	<div id="default-site-options"> <!-- site creation option-->
 	<?php switch($this->network_settings['themedisplay']){
 		case 'dropdown':?>
 		<table class="form-table">
@@ -165,6 +107,7 @@ if ( ! empty( $messages ) ) {
 		<div class="plugins-browser">
 			<?php include('plugins-inc.php');?>
 		</div>
+		<input type="hidden" name="blog[checked-plugins]" id="checked_plugins" value="" />
 		<?php break;}?>
 
 	<h3 style="width:100%"><?php _e('New Site Custom Settings')?></h3>

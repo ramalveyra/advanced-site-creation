@@ -71,7 +71,7 @@ class Advance_Site_Creation_Manager
 	 * set as 'clone' to default the feature to site cloning
 	 * set as 'default' for the default site creation settings
 	 */
-	public $site_creation_method = 'clone';
+	public $site_creation_method = 'default';
 
 	/**
 	* Set the way plugins are handled e.g. Admin only, required etc.
@@ -1242,9 +1242,18 @@ class Advance_Site_Creation_Manager
 	 }
 
 	 private function setPlugins($blog_id){
-	 	if (!empty($_POST['blog']['checked-plugins'])) {
+	 	$checked_plugins = array();
+	 	
+	 	if(is_array($_POST['blog']['checked-plugins'])){
+	 		$checked_plugins = $_POST['blog']['checked-plugins'];
+	 	}else{
+	 		if($_POST['blog']['checked-plugins']!==''){
+	 			$checked_plugins = explode(',', $_POST['blog']['checked-plugins']);
+	 		}
+	 	}
+	 	if (!empty($checked_plugins)) {
 	 		switch_to_blog($blog_id);
-	 		$selected_plugins = $_POST['blog']['checked-plugins'];
+	 		$selected_plugins = $checked_plugins;
 	 		foreach($selected_plugins as $sp){
 	 			if(array_key_exists($sp, $this->allowedPlugins)){
 	 				activate_plugin($sp);

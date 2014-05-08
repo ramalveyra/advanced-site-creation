@@ -149,6 +149,25 @@
             });
         }
 
+        //handle plugin selection
+        var checkedPlugins;
+
+        var handlePluginClick = function(){
+            checkedPlugins = $('#checked_plugins').val();
+
+            checkedPlugins = (checkedPlugins=='')? [] : checkedPlugins.split(',');
+
+            if($(this).is(':checked')){
+                if($.inArray($(this).val(),checkedPlugins)==-1){
+                    checkedPlugins.push($(this).val());
+                    $('#checked_plugins').val(checkedPlugins);
+                }
+            }else{
+                checkedPlugins.splice($.inArray($(this).val(), checkedPlugins),1);
+                $('#checked_plugins').val(checkedPlugins);
+            }
+        }
+
         var preventSubmit = function(e, target){
             //prevent submission on enter
             if(e.keyCode == 13) {
@@ -163,7 +182,18 @@
             $('#theme-search-input').bind('keypress',preventSubmit);
             $('#plugins-search-input').bind('keypress',preventSubmit);
             $('.pagination-links a').bind('click',handlePaginationClicks);
-            $('.pagination-links input.current-page').bind('keydown',handlePaginationInput);    
+            $('.pagination-links input.current-page').bind('keydown',handlePaginationInput);
+            $('.available_plugins').bind('click',handlePluginClick);
+
+            //add the checks for plugins
+            checkedPlugins = $('#checked_plugins').val();
+            checkedPlugins = (checkedPlugins=='')? [] : checkedPlugins.split(',');
+            $('.available_plugins').each(function(key,elem){
+                //console.log($(elem).val());
+                if($.inArray($(elem).val(),checkedPlugins)!==-1){
+                    $(elem).attr('checked','checked');
+                }
+            });
         }
 
         var focusCampo = function(id){
@@ -184,80 +214,6 @@
                 inputField.focus();
             }
         }
-
-        //handle site cloning
-        //toggle
-        $('#create-site-from-template').click(function(){
-            if(!$('#create-site-from-template').is(':checked')){
-                //show the default
-                $('#clone-site-options').hide();
-                $('#default-site-options').show();
-                $('.default-site-creation').show();
-                $('#add-site-advanced-frm').attr('action','http://' + window.location.host + '/wp-admin/network/site-new.php?action=add-site&advanced=true');
-            }else{
-                $('#clone-site-options').show();
-                $('#default-site-options').hide();
-                $('.default-site-creation').hide();
-                $('#add-site-advanced-frm').attr('action',window.location.href);
-            }
-        });
-
-        $('#add-site').click(function(e){
-            var self = this;
-            //check if option to clone is enabled
-            if($('#create-site-from-template').is(':checked')){
-                //the ajax call
-                var action = 'clone_site_ajax';
-                var nonce = $('#_wpnonce_clone-site').val();
-                $(this).hide();
-                $('.preloader').show(); 
-                $('#clone-log').html('');
-                $('#clone-log').html('Cloning site... \n');
-
-                //the values
-                var values = {}
-                values['domain'] = $('input[name=blog\\[domain\\]]').val();
-                values['title'] = $('input[name=blog\\[title\\]]').val();
-                values['tagline'] = $('input[name=blog\\[tagline\\]]').val();
-                values['domain_name'] = $('input[name=blog\\[domain_name\\]]').val();
-                values['site_template'] = $('#clone-site-template').val();
-                values['site_user'] = $('#clone-site-user').val();
-                values['include_uploads'] = $('#clone-site-uploads-import').is(':checked')?true:false;
-
-                $.ajax({
-                    type : "post",
-                    url : asc_ajax.ajaxurl,
-                    data : {
-                        action: action,
-                        values : values,
-                        //current_page : current_page,
-                        //total_pages : total_pages,
-                        //page_action : 'goto-page',
-                        //search_query : search_query,
-                        nonce   : nonce
-                    },
-                    success: function(response) {
-                        if(response.success==true){
-                            $('#clone-log').html($('#clone-log').html()+response.message);
-                            $(self).show();
-                            $('.preloader').hide();
-                            //add notice
-                            var notice = $('<div id="message" class="updated"><p>'+response.notice+'</p></div>');
-                            if($('#message').length){
-                                $('#message').html('<p>'+response.notice+'</p>');
-                            }else{
-                                notice.insertAfter($('#add-new-site'));
-                            }
-                        }else{
-                            $('#clone-log').html($('#clone-log').html()+response.message);
-                            $(self).show();
-                            $('.preloader').hide();
-                        }
-                    }
-                });
-                e.preventDefault();    
-            }
-        });
 
         bindEvents();
     });
