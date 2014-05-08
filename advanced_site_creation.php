@@ -1241,27 +1241,28 @@ class Advance_Site_Creation_Manager
 	 	}
 	 }
 
-	 private function setPlugins($blog_id){
-	 	$checked_plugins = array();
-
-	 	if(is_array($_POST['blog']['checked-plugins'])){
-	 		$checked_plugins = $_POST['blog']['checked-plugins'];
-	 	}else{
-	 		if($_POST['blog']['checked-plugins']!==''){
-	 			$checked_plugins = explode(',', $_POST['blog']['checked-plugins']);
-	 		}
-	 	}
-	 	if (!empty($checked_plugins)) {
-	 		switch_to_blog($blog_id);
-	 		$selected_plugins = $checked_plugins;
-	 		foreach($selected_plugins as $sp){
-	 			if(array_key_exists($sp, $this->allowedPlugins)){
-	 				activate_plugin($sp);
-	 			}
-	 		}
-	 		restore_current_blog();
-	 	}
-	 }
+	private function setPlugins($blog_id){
+		$checked_plugins = array();
+		if(!empty($_POST['blog']['checked-plugins'])){
+			if(is_array($_POST['blog']['checked-plugins'])){
+				$checked_plugins = $_POST['blog']['checked-plugins'];
+		 	}else{
+		 		if($_POST['blog']['checked-plugins']!==''){
+		 			$checked_plugins = explode(',', $_POST['blog']['checked-plugins']);
+		 		}
+		 	}
+		 	if (!empty($checked_plugins)) {
+		 		switch_to_blog($blog_id);
+		 		$selected_plugins = $checked_plugins;
+		 		foreach($selected_plugins as $sp){
+		 			if(array_key_exists($sp, $this->allowedPlugins)){
+		 				activate_plugin($sp);
+		 			}
+		 		}
+		 		restore_current_blog();
+		 	}
+		}
+	}
 
 	 /**
 	  * Sets the sites custom settings
