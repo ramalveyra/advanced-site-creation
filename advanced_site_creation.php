@@ -82,7 +82,7 @@ class Advance_Site_Creation_Manager
 		'advanced-site-creation/advanced_site_creation.php' => array('exclude'),
 		'wordpress-mu-domain-mapping/domain_mapping.php' => array('exclude','required')
 	);
-
+	
 	public function __construct(){
 		add_action( 'network_admin_menu', array( $this,'add_advanced_site_creation_menu' ));
 		add_action('wpmu_new_blog', array($this,'advanced_site_configs'));
@@ -1236,14 +1236,14 @@ class Advance_Site_Creation_Manager
 	 private function setTheme($blog_id){
 	 	if (!empty($_POST['theme-id'])) {
 	 		switch_to_blog($blog_id);
-	 		switch_theme($_POST['theme-id'],$_POST['theme-id']); 
+	 		switch_theme($_POST['theme-id']); 
     		restore_current_blog();
 	 	}
 	 }
 
 	 private function setPlugins($blog_id){
 	 	$checked_plugins = array();
-	 	
+
 	 	if(is_array($_POST['blog']['checked-plugins'])){
 	 		$checked_plugins = $_POST['blog']['checked-plugins'];
 	 	}else{

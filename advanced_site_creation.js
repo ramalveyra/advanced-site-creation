@@ -186,14 +186,16 @@
             $('.available_plugins').bind('click',handlePluginClick);
 
             //add the checks for plugins
-            checkedPlugins = $('#checked_plugins').val();
-            checkedPlugins = (checkedPlugins=='')? [] : checkedPlugins.split(',');
-            $('.available_plugins').each(function(key,elem){
-                //console.log($(elem).val());
-                if($.inArray($(elem).val(),checkedPlugins)!==-1){
-                    $(elem).attr('checked','checked');
-                }
-            });
+            if($('#checked_plugins').length!==0){
+                checkedPlugins = $('#checked_plugins').val();
+                checkedPlugins = (checkedPlugins=='')? [] : checkedPlugins.split(',');
+                $('.available_plugins').each(function(key,elem){
+                    //console.log($(elem).val());
+                    if($.inArray($(elem).val(),checkedPlugins)!==-1){
+                        $(elem).attr('checked','checked');
+                    }
+                });
+            }
         }
 
         var focusCampo = function(id){
