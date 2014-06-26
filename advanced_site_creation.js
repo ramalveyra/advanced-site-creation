@@ -149,6 +149,25 @@
             });
         }
 
+        //handle plugin selection
+        var checkedPlugins;
+
+        var handlePluginClick = function(){
+            checkedPlugins = $('#checked_plugins').val();
+
+            checkedPlugins = (checkedPlugins=='')? [] : checkedPlugins.split(',');
+
+            if($(this).is(':checked')){
+                if($.inArray($(this).val(),checkedPlugins)==-1){
+                    checkedPlugins.push($(this).val());
+                    $('#checked_plugins').val(checkedPlugins);
+                }
+            }else{
+                checkedPlugins.splice($.inArray($(this).val(), checkedPlugins),1);
+                $('#checked_plugins').val(checkedPlugins);
+            }
+        }
+
         var preventSubmit = function(e, target){
             //prevent submission on enter
             if(e.keyCode == 13) {
@@ -163,7 +182,20 @@
             $('#theme-search-input').bind('keypress',preventSubmit);
             $('#plugins-search-input').bind('keypress',preventSubmit);
             $('.pagination-links a').bind('click',handlePaginationClicks);
-            $('.pagination-links input.current-page').bind('keydown',handlePaginationInput);    
+            $('.pagination-links input.current-page').bind('keydown',handlePaginationInput);
+            $('.available_plugins').bind('click',handlePluginClick);
+
+            //add the checks for plugins
+            if($('#checked_plugins').length!==0){
+                checkedPlugins = $('#checked_plugins').val();
+                checkedPlugins = (checkedPlugins=='')? [] : checkedPlugins.split(',');
+                $('.available_plugins').each(function(key,elem){
+                    //console.log($(elem).val());
+                    if($.inArray($(elem).val(),checkedPlugins)!==-1){
+                        $(elem).attr('checked','checked');
+                    }
+                });
+            }
         }
 
         var focusCampo = function(id){

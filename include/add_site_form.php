@@ -11,7 +11,7 @@ if ( ! empty( $messages ) ) {
 	foreach ( $messages as $msg )
 		echo '<div id="message" class="updated"><p>' . $msg . '</p></div>';
 } ?>
-<form method="post" action="<?php echo network_admin_url('site-new.php?action=add-site&advanced=true'); ?>">
+<form method="post" action="<?php echo $form_action; ?>" id="add-site-advanced-frm">
 <?php wp_nonce_field( 'add-blog', '_wpnonce_add-blog' ) ?>
 	<table class="form-table">
 		<tr class="form-field form-required">
@@ -30,11 +30,11 @@ if ( ! empty( $messages ) ) {
 			<th scope="row"><?php _e( 'Site Title' ) ?></th>
 			<td><input name="blog[title]" type="text" class="regular-text" title="<?php esc_attr_e( 'Title' ) ?>"/></td>
 		</tr>
-		<tr class="form-field form-required">
+		<tr class="form-field form-required default-site-creation">
 			<th scope="row"><?php _e( 'Admin Email' ) ?></th>
 			<td><input name="blog[email]" type="text" class="regular-text" title="<?php esc_attr_e( 'Email' ) ?>"/></td>
 		</tr>
-		<tr class="form-field">
+		<tr class="form-field default-site-creation" style="display:none;">
 			<td colspan="2"><?php _e( 'A new user will be created if the above email address is not in the database.' ) ?><br /><?php _e( 'The username and password will be mailed to this email address.' ) ?></td>
 		</tr>
 	</table>
@@ -48,6 +48,9 @@ if ( ! empty( $messages ) ) {
 			</tr>
 		</tbody>
 	</table>
+	<h3 style="width:100%"><?php _e('Customize Site')?></h3>
+
+	<div id="default-site-options"> <!-- site creation option-->
 	<?php switch($this->network_settings['themedisplay']){
 		case 'dropdown':?>
 		<table class="form-table">
@@ -104,6 +107,7 @@ if ( ! empty( $messages ) ) {
 		<div class="plugins-browser">
 			<?php include('plugins-inc.php');?>
 		</div>
+		<input type="hidden" name="blog[checked-plugins]" id="checked_plugins" value="" />
 		<?php break;}?>
 
 	<h3 style="width:100%"><?php _e('New Site Custom Settings')?></h3>
@@ -130,6 +134,30 @@ if ( ! empty( $messages ) ) {
 		</tbody>
 	</table>
 
+	<table class="form-table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('Default site widgets')?></th>
+				<td>
+					<label><input name="blog[remove_default_widgets]" type="checkbox" id="blog[remove_default_widgets]"> <?php echo __('Remove Default Widgets added to the new site')?>.
+					<br/><p><em>* Some themes will ingore this.</em></p></label>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<table class="form-table">
+		<tbody>
+			<tr valign="top">
+				<th scope="row"><?php echo __('New Site Notifications')?></th>
+				<td>
+					<label><input name="blog[remove_new_site_notif]" type="checkbox" id="blog[remove_new_site_notif]"> <?php echo __('Don\'t send email notifications after new site has been created.')?></label>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	</div><!-- end site creation option -->
+	<div class="preloader" style="display:none;"><img src="<?php echo ASC_PLUGIN_URL?>include/ajax-loader.gif" /></div>
 	<?php submit_button( __('Add Site'), 'primary', 'add-site' ); ?>
 	</form>
 </div>
