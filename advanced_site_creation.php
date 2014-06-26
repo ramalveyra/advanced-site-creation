@@ -577,7 +577,7 @@ class Advance_Site_Creation_Manager
 		} else {
 			$domain = get_blog_details(1)->domain;
 			$fulldomain = get_blog_details(1)->domain . "/" . $siteurl; 
-			$path = "/" . $domain; 
+			$path = "/" . $siteurl; 
 		}
 
 		//invalid domain
