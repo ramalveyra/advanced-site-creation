@@ -577,7 +577,7 @@ class Advance_Site_Creation_Manager
 		} else {
 			$domain = get_blog_details(1)->domain;
 			$fulldomain = get_blog_details(1)->domain . "/" . $siteurl; 
-			$path = "/" . $domain; 
+			$path = "/" . $siteurl; 
 		}
 
 		//invalid domain
@@ -592,7 +592,7 @@ class Advance_Site_Creation_Manager
 
 		//Add some info
 		$message = '';
-		$message.= 'New Site Address: '.$domain.PHP_EOL;
+		$message.= 'New Site Address: http://'.$fulldomain.'/'.PHP_EOL;
 		$message.= 'New Site Title: '.$blogname.PHP_EOL;
 
 		// Check first if domain already exists then add a new site
