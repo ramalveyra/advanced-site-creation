@@ -1,0 +1,6 @@
+{
+  "name": "Link7/advanced-site-creation",
+  "type": "wordpress-plugin",
+  "description": "A plugin to customise Wordpress MU site creation",
+  "license": "GPL-3.0+"
+}

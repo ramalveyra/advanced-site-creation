@@ -3,7 +3,7 @@
  * Plugin Name: Advanced Site Creation Plugin
  * Plugin URI: https://github.com/Link7/advanced-site-creation
  * Description: A plugin to customise Wordpress MU site creation
- * Version: 1.2
+ * Version: 0.7
  * Author: Link7
  * Author URI: https://github.com/Link7
  * License: GPL3
